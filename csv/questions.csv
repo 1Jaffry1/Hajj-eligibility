@@ -7,9 +7,12 @@ level,qId,order,question_text,help_text,label1,label2,label3,label4,label5
 2,L2Q1,1,"Does your health allow you to travel to and stay in Makkah, as well as perform Hajj without hardship?",,Yes,No,,,
 2,L2Q2,2,Are you hopeful that the excuse will go away and you will be able to perform Hajj yourself?,,Yes,No,,,
 3,L3Q1,1,Do the sources of your funds for Hajj a gift package (full gift package or partial gift package)?,,Yes,No,,,
-3,L3Q2,2,"1) Provisions for Hajj.\n
-2) Travel expenses for Hajj.\n
-3) Living expenses of dependents (and others) while you are away for Hajj.\n\n
+3,L3Q2,2,"1) Provisions for Hajj.
+
+2) Travel expenses for Hajj.
+
+3) Living expenses of dependents (and others) while you are away for Hajj.
+
 
 Does your Hajj gift package fully cover the above mentioned costs based on your status?",,Yes,No,,,
 3,L3Q3,3,Do you only earn during the Hajj season and use those earnings to survive the rest of the year such that if you go to Hajj you won’t be able to survive the rest of the year?,,Yes,No,,,

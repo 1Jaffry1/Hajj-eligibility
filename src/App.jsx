@@ -322,7 +322,7 @@ function getLevelsOrThrow(texts) {
     3: "Financial",
     4: "Travel",
     5: "Time",
-    6: "Miscallenous"
+    6: "Miscellaneous"
   };
 
   if (!texts) throw new Error("Questions sheet not loaded.");
