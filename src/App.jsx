@@ -314,17 +314,37 @@ function requireSheetsOrThrow({ texts, phrases, logic }) {
 
 function getLevelsOrThrow(texts) {
   if (!texts) throw new Error("Questions sheet not loaded.");
-  const levelIds = Object.keys(texts).filter(k => /^L\d+$/.test(k)).map(k => Number(k.slice(1))).sort((a, b) => a - b);
+
+  // Internal mapping of level IDs to custom titles
+  const LEVEL_TITLES = {
+    1: "Personal",
+    2: "Health",
+    3: "Financial",
+    4: "Travel",
+    5: "Time",
+    6: "Miscallenous"
+  };
+
+  if (!texts) throw new Error("Questions sheet not loaded.");
+  
+  const levelIds = Object.keys(texts)
+    .filter(k => /^L\d+$/.test(k))
+    .map(k => Number(k.slice(1)))
+    .sort((a, b) => a - b);
+
   if (levelIds.length === 0) throw new Error("Questions sheet is empty.");
+
   return levelIds.map(id => {
     const lvlKey = "L" + id;
     const qIds = Object.keys(texts[lvlKey] || {}).sort((a, b) => {
-      const ai = Number(a.split("Q")[1]); const bi = Number(b.split("Q")[1]);
+      const ai = Number(a.split("Q")[1]); 
+      const bi = Number(b.split("Q")[1]);
       return ai - bi;
     });
+
     return {
       id,
-      title: `Level ${id}`,
+      title: LEVEL_TITLES[id] || `Level ${id}`,  // <-- use internal mapping
       icon: [User, HeartPulse, Wallet, Plane, Clock, MoreHorizontal][(id - 1) % 6] || MoreHorizontal,
       questions: qIds.map(qid => texts[lvlKey][qid]?.prompt || qid),
     };
