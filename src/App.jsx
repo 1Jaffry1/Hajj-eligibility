@@ -368,11 +368,6 @@ function evalRoutesFor(levelRules, nodeId, uiAnswer, vars) {
     if (s === "no") answer = false;
     if (s === "true") answer = true;
     if (s === "false") answer = false;
-  } else if (node.input_type === "options3") {
-    const s = String(uiAnswer).trim().toLowerCase().replace(/\s+/g, "");
-    if (s === "fullpackage") answer = "OP1";
-    else if (s === "partialpackage") answer = "OP2";
-    else if (s === "other") answer = "OP3";
   }
 
   const outVars = { ...(vars || {}) };
@@ -380,7 +375,9 @@ function evalRoutesFor(levelRules, nodeId, uiAnswer, vars) {
 
   if (Array.isArray(node.routes)) {
     for (const r of node.routes) {
-      // guard branch
+      // GUARD HANDLING: if a guard is present, evaluate it.
+      // - If the guard *matches*, follow guard.next (FAIL/END/next) as before.
+      // - If the guard does *not* match, SKIP this route entirely (continue).
       if (r.guard) {
         const gv = outVars[r.guard.field];
         if (opCompare(r.guard.op, gv, r.guard.value)) {
@@ -389,18 +386,18 @@ function evalRoutesFor(levelRules, nodeId, uiAnswer, vars) {
           if (r.guard.next) return { ok: true, vars: outVars, nextNode: r.guard.next };
           return { ok: false, vars: outVars, reason: r.guard.reason || "L" };
         }
+        // guard present and did NOT match -> skip this route entirely
+        continue;
       }
 
-      // normal route
+      // normal route (no guard)
       const when = r.when || {};
       const left = outVars[when.field];
       const right = when.value;
       if (opCompare(when.op, left, right)) {
         if (r.set && typeof r.set === "object") Object.assign(outVars, r.set);
 
-        // ✱ terminal success
         if (r.goto_node === "END") return { ok: true, vars: outVars, complete: true };
-
         if (r.reset_to) return { ok: true, vars: outVars, action: "resetTo", nextNode: r.reset_to };
         if (r.goto_node === "FAIL") return { ok: false, vars: outVars, reason: r.reason || "L" };
         if (r.goto_node) return { ok: true, vars: outVars, nextNode: r.goto_node };
@@ -418,6 +415,7 @@ function evalRoutesFor(levelRules, nodeId, uiAnswer, vars) {
 
   return { ok: true, vars: outVars };
 }
+
 
 
 function nodeIdFor(levelId, qIndex) { return "L" + levelId + "Q" + (qIndex + 1); }
@@ -547,7 +545,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
   const seen = new Set();
 
   while (qIdx != null && qIdx < maxQ) {
-    if (seen.has(qIdx)) break;         // avoid loops
+    if (seen.has(qIdx)) break;
     seen.add(qIdx);
 
     path.push(qIdx);

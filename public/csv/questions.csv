@@ -6,14 +6,18 @@ level,qId,order,question_text,help_text,label1,label2,label3,label4,label5
 1,L1Q5,5,Is your sanity period enough to allow you to perform Hajj and its prerequisites?,,Yes,No,,,
 2,L2Q1,1,"Does your health allow you to travel to and stay in Makkah, as well as perform Hajj without hardship?",,Yes,No,,,
 2,L2Q2,2,Are you hopeful that the excuse will go away and you will be able to perform Hajj yourself?,,Yes,No,,,
-3,L3Q1,1,Is the source of your funds for Hajj a gift package (full gift package or partial gift package)?,,Full Package,Partial Package,Other,,
-3,L3Q2,2,Does your Hajj gift package fully cover the above mentioned costs based on your status?,,Yes,No,,,
+3,L3Q1,1,Do the sources of your funds for Hajj a gift package (full gift package or partial gift package)?,,Yes,No,,,
+3,L3Q2,2,"1) Provisions for Hajj.\n
+2) Travel expenses for Hajj.\n
+3) Living expenses of dependents (and others) while you are away for Hajj.\n\n
+
+Does your Hajj gift package fully cover the above mentioned costs based on your status?",,Yes,No,,,
 3,L3Q3,3,Do you only earn during the Hajj season and use those earnings to survive the rest of the year such that if you go to Hajj you won’t be able to survive the rest of the year?,,Yes,No,,,
 3,L3Q4,4,Do you have any debts to pay?,,Yes,No,,,
 3,L3Q5,5,Will going to Hajj result in you not being able to pay those loans on their due date?,,Yes,No,,,
-3,L3Q6,6,Does your partial Hajj gift package combined with your personal extra funds cover the above mentioned costs based on your status?,,Yes,No,,,
-3,L3Q7,7,"Do you possess (in kind or cash) all the provisions needed for your trip — food, hotel, and other necessities of travel?",,Yes,No,I don't know,,
-3,L3Q8,8,Do you possess the means of transportation (or funds to pay for travel costs) to Hajj?,,Yes,No,I don't know,,
+3,L3Q6,6,Does your partial Hajj gift package combined with your personal extra funds cover the mentioned costs based on your status?,,Yes,No,,,
+3,L3Q7,7,"Do you possess (in kind or cash) all the provisions needed for your trip — food, hotel, and other necessities of travel?",,Yes,No,,,
+3,L3Q8,8,Do you possess the means of transportation (or funds to pay for travel costs) to Hajj?,,Yes,No,,,
 3,L3Q9,9,Do you have the ability to pay (while away for Hajj) the expenses of those whose maintenance is obligatory on you (e.g. wife and children) and those whose expenses are not obligatory but whose hardship would cause you distress?,,Yes,No,,,
 3,L3Q10,10,Is it possible to sell the loan at a lower price (as long as it is not considered an extreme loss) such that the price suffices for Hajj expenses?,,Yes,No,,,
 3,L3Q11,11,Has the due date of the outstanding loan arrived?,,Yes,No,,,
