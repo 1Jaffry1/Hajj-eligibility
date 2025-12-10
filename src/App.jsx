@@ -26,7 +26,8 @@ import { Button } from "@/components/ui/button";
 const STYLES = {
   option3: {
     bg: "linear-gradient(to bottom, #efe1b6b0 0%, #d3b950d0 100%)",
-    surface: "#F9F5E7",
+    // surface: "#F9F5E7",
+    surface: "#d3b950d0",
     // surfaceSoft: "#F1EAD1",
     surfaceSoft: "#d3b950d0",
     border: "#C5C1AC",
