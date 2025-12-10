@@ -886,7 +886,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
               >
                 <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: theme.success }} />
                 <p>
-                  {resolvePhrase(vars && vars.END_PHRASE ? vars.END_PHRASE : "Eligible")}
+                  {resolvePhrase(vars && vars.END_PHRASE ? vars.END_PHRASE : "Eligsible")}
                 </p>
               </div>
             )}
