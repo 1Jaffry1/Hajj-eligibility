@@ -802,6 +802,15 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
   const allAnsweredAndEligible = ended || (!stop && path.every((q) => answers[q]));
 
+  // Determine color based on HEALTH_STATE for level 2
+  const getHealthColor = () => {
+    if (levelId !== 2) return null;
+    const healthState = vars?.HEALTH_STATE;
+    if (healthState === "GREEN") return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
+    if (healthState === "ORANGE") return { color: theme.warn, bg: "rgba(245, 124, 0, 0.10)" };
+    if (healthState === "YELLOW") return { color: theme.caution, bg: "rgba(251, 192, 45, 0.10)" };
+    return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
+  };
 
   function handleSave() {
     const status = stop ? "failed" : allAnsweredAndEligible ? "completed" : "idle";
@@ -934,12 +943,12 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
               <div
                 className="flex items-start gap-3 rounded-2xl border p-4 text-sm"
                 style={{
-                  borderColor: theme.success,
-                  background: "rgba(92, 198, 92, 0.10)", // subtle green tint
+                  borderColor: getHealthColor()?.color || theme.success,
+                  background: getHealthColor()?.bg || "rgba(92, 198, 92, 0.10)",
                   color: theme.text
                 }}
               >
-                <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: theme.success }} />
+                <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: getHealthColor()?.color || theme.success }} />
                 <p>
                   {t(vars?.END_PHRASE)}
                   {/* check the line above for bug */}
