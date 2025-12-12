@@ -802,6 +802,15 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
   const allAnsweredAndEligible = ended || (!stop && path.every((q) => answers[q]));
 
+  // Determine color based on HEALTH_STATE (for level 2 only)
+  const getHealthColor = () => {
+    if (levelId !== 2) return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
+    const healthState = vars?.HEALTH_STATE;
+    if (healthState === "GREEN") return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
+    if (healthState === "ORANGE") return { color: theme.warn, bg: "rgba(245, 124, 0, 0.10)" };
+    if (healthState === "YELLOW") return { color: theme.caution, bg: "rgba(251, 192, 45, 0.10)" };
+    return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
+  };
 
   function handleSave() {
     const status = stop ? "failed" : allAnsweredAndEligible ? "completed" : "idle";
@@ -833,13 +842,14 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                 <motion.div key={qIdx} initial={i === path.length - 1 ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.25, ease: "easeOut" }}>
                   <div className="rounded-2xl border p-5" style={{ background: STYLES.option3.surfaceSoft, borderColor: theme.border }}>
                     <div className="flex flex-col items-center gap-2">
-                      <p className="text-[15px] font-medium text-center" style={{ color: theme.text }}>{q}</p>
-                      {help && (
-                        <button onClick={() => setOpenHelpFor(openHelpFor === qIdx ? null : qIdx)} className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-sm" style={{ borderColor: theme.border, color: theme.text, background: theme.surface }} aria-expanded={openHelpFor === qIdx}>
-                          <CircleHelp className="h-4 w-4" />
-                          {/* <span>Help</span>  */}
-                        </button>
-                      )}
+                      <div className="flex items-center justify-center gap-2">
+                        <p className="text-[15px] font-medium text-center" style={{ color: theme.text }}>{q}</p>
+                        {help && (
+                          <button onClick={() => setOpenHelpFor(openHelpFor === qIdx ? null : qIdx)} className="inline-flex items-center gap-2 px-2 py-1 rounded-lg border text-sm flex-shrink-0" style={{ borderColor: theme.border, color: theme.text, background: theme.surface }} aria-expanded={openHelpFor === qIdx}>
+                            <CircleHelp className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                       {openHelpFor === qIdx && (
                         <div className="w-full rounded-xl border p-3 text-sm" style={{ borderColor: theme.border, background: theme.surface, color: theme.text }}>{help}</div>
                       )}
@@ -925,13 +935,6 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                         <p>{info}</p>
                       </div>
                     )} */}
-
-                    {isStopHere && (
-                      <div className="mt-4 flex items-start gap-2 rounded-xl border p-3 text-sm" style={{ borderColor: theme.border, background: theme.surface, color: theme.text }}>
-                        <Lock className="h-4 w-4" />
-                        <p bg="red">{t(stop?.reason)}</p>
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               );
@@ -941,12 +944,12 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
               <div
                 className="flex items-start gap-3 rounded-2xl border p-4 text-sm"
                 style={{
-                  borderColor: theme.success,
-                  background: "rgba(92, 198, 92, 0.10)", // subtle green tint
+                  borderColor: getHealthColor()?.color || theme.success,
+                  background: getHealthColor()?.bg || "rgba(92, 198, 92, 0.10)",
                   color: theme.text
                 }}
               >
-                <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: theme.success }} />
+                <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: getHealthColor()?.color || theme.success }} />
                 <p>
                   {t(vars?.END_PHRASE)}
                   {/* check the line above for bug */}
@@ -956,8 +959,8 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
 
             {stop && (
-              <div className="flex items-start gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: theme.border, background: theme.surfaceSoft, color: theme.text }}>
-                <TriangleAlert className="mt-0.5 h-5 w-5" />
+              <div className="flex items-start gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: theme.danger, background: "rgba(211, 47, 47, 0.10)", color: theme.text }}>
+                <TriangleAlert className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: theme.danger }} />
                 <p>{t(stop?.reason)}</p>
               </div>
             )}
