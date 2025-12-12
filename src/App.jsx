@@ -132,35 +132,22 @@ function parseCSV(text) {
 /* =====================
    LOAD QUESTIONS + PHRASES (Sheets)
    ===================== */
+// Prefer remote Google Sheets; fallback to cached/local data. Cache successful pulls in localStorage.
 async function loadSheets(questionsUrl, phrasesUrl) {
   const out = { texts: null, phrases: null };
 
-  // Try local files first (served from /csv/*). If they fail, fall back to the remote sheet URLs.
-  // QUESTIONS
+  const getCache = (key) => {
+    try {
+      const s = localStorage.getItem(key);
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  };
+  const setCache = (key, val) => {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+  };
+
+  // QUESTIONS: try remote first
   try {
-    const qLocal = await fetchText(LOCAL_QUESTIONS);
-    if (qLocal.kind === "csv") {
-      const { data, idx } = parseCSV(qLocal.data);
-      const texts = {};
-      for (const row of data) {
-        const level = row[idx("level")] || "";
-        const qId = row[idx("qId")] || "";
-        const prompt = row[idx("question_text")] || "";
-        const help = row[idx("help_text")] || "";
-        const labels = [];
-        for (const key of ["label1", "label2", "label3", "label4", "label5"]) {
-          const i = idx(key);
-          if (i >= 0 && row[i]) labels.push(row[i]);
-        }
-        if (level && qId) {
-          const lvlKey = `L${level}`;
-          texts[lvlKey] ??= {};
-          texts[lvlKey][qId] = { prompt, help, labels };
-        }
-      }
-      out.texts = texts;
-    }
-  } catch (e) {
     if (questionsUrl) {
       const q = await fetchText(questionsUrl);
       if (q.kind === "csv") {
@@ -183,26 +170,47 @@ async function loadSheets(questionsUrl, phrasesUrl) {
           }
         }
         out.texts = texts;
+        setCache("cache_texts", texts);
       } else {
         out.texts = q.data;
+        setCache("cache_texts", q.data);
       }
+    }
+  } catch (e) {
+    // Fallback: cached, then local file
+    const cached = getCache("cache_texts");
+    if (cached) {
+      out.texts = cached;
+    } else {
+      try {
+        const qLocal = await fetchText(LOCAL_QUESTIONS);
+        if (qLocal.kind === "csv") {
+          const { data, idx } = parseCSV(qLocal.data);
+          const texts = {};
+          for (const row of data) {
+            const level = row[idx("level")] || "";
+            const qId = row[idx("qId")] || "";
+            const prompt = row[idx("question_text")] || "";
+            const help = row[idx("help_text")] || "";
+            const labels = [];
+            for (const key of ["label1", "label2", "label3", "label4", "label5"]) {
+              const i = idx(key);
+              if (i >= 0 && row[i]) labels.push(row[i]);
+            }
+            if (level && qId) {
+              const lvlKey = `L${level}`;
+              texts[lvlKey] ??= {};
+              texts[lvlKey][qId] = { prompt, help, labels };
+            }
+          }
+          out.texts = texts;
+        }
+      } catch {}
     }
   }
 
-  // PHRASES
+  // PHRASES: try remote first
   try {
-    const pLocal = await fetchText(LOCAL_PHRASES);
-    if (pLocal.kind === "csv") {
-      const { data, idx } = parseCSV(pLocal.data);
-      const dict = {};
-      for (const row of data) {
-        const key = row[idx("key")];
-        const val = row[idx("text")];
-        if (key) dict[key] = val || "";
-      }
-      out.phrases = dict;
-    }
-  } catch (e) {
     if (phrasesUrl) {
       const p = await fetchText(phrasesUrl);
       if (p.kind === "csv") {
@@ -214,9 +222,31 @@ async function loadSheets(questionsUrl, phrasesUrl) {
           if (key) dict[key] = val || "";
         }
         out.phrases = dict;
+        setCache("cache_phrases", dict);
       } else {
         out.phrases = p.data;
+        setCache("cache_phrases", p.data);
       }
+    }
+  } catch (e) {
+    // Fallback: cached, then local file
+    const cached = getCache("cache_phrases");
+    if (cached) {
+      out.phrases = cached;
+    } else {
+      try {
+        const pLocal = await fetchText(LOCAL_PHRASES);
+        if (pLocal.kind === "csv") {
+          const { data, idx } = parseCSV(pLocal.data);
+          const dict = {};
+          for (const row of data) {
+            const key = row[idx("key")];
+            const val = row[idx("text")];
+            if (key) dict[key] = val || "";
+          }
+          out.phrases = dict;
+        }
+      } catch {}
     }
   }
 
@@ -226,17 +256,43 @@ async function loadSheets(questionsUrl, phrasesUrl) {
 /* =====================
    LOAD LOGIC
    ===================== */
+// Prefer remote; fallback to cached/local. Cache successful pulls.
 async function loadLogic(url) {
-  // Try local logic file first, then fall back to remote `url` if provided
   if (!url && typeof window === 'undefined') return null;
-  let r;
+
+  const getCache = (key) => {
+    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : null; } catch { return null; }
+  };
+  const setCache = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} };
+
+  let data = [];
+  let idx = () => -1;
   try {
-    r = await fetchText(LOCAL_LOGIC);
+    if (url) {
+      const r = await fetchText(url);
+      if (r.kind === "csv") {
+        const parsed = parseCSV(r.data);
+        data = parsed.data; idx = parsed.idx;
+        setCache("cache_logic_csv", r.data);
+      }
+    }
   } catch (e) {
-    if (!url) return null;
-    r = await fetchText(url);
+    // Fallback to cached CSV text, then local file
+    const cachedCsv = getCache("cache_logic_csv");
+    if (cachedCsv) {
+      const parsed = parseCSV(cachedCsv);
+      data = parsed.data; idx = parsed.idx;
+    } else {
+      try {
+        const rLocal = await fetchText(LOCAL_LOGIC);
+        if (rLocal.kind === "csv") {
+          const parsed = parseCSV(rLocal.data);
+          data = parsed.data; idx = parsed.idx;
+        }
+      } catch {}
+    }
   }
-  const { data, idx } = r.kind === "csv" ? parseCSV(r.data) : { data: [], idx: () => -1 };
+
   const byLevel = {};
   const ensure = (obj, key, def) => (obj[key] ??= def);
   const parseSetVars = (s) => {
@@ -887,6 +943,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                 <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: theme.success }} />
                 <p>
                   {resolvePhrase(vars && vars.END_PHRASE ? vars.END_PHRASE : "Eligsible")}
+                  {/* check the line above for bug */}
                 </p>
               </div>
             )}
