@@ -503,10 +503,22 @@ function passesRule(levelId, qIndex, answer, options) {
   return { ok: true };
 }
 
+// Global phrase resolver: only returns phrases from the sheet (no hardcoded fallbacks)
+function resolvePhrase(phrases, raw) {
+  if (!raw) return "";
+  const key = String(raw).trim();
+  const variants = [key, key.split(' ').filter(Boolean).join('_')];
+  for (const k of variants) {
+    if (phrases && phrases[k]) return phrases[k];
+  }
+  return "";
+}
+
 /* =====================
    HOME
    ===================== */
-function Home({ theme, onPick, statuses, overallResult, levels, onReset }) {
+function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases }) {
+  const t = (key) => resolvePhrase(phrases, key);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center" style={{ background: theme.bg }}>
@@ -514,24 +526,24 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset }) {
         <button
           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition"
           style={{ borderColor: theme.border, color: theme.text, background: theme.surface, marginInline: "4px" }}>
-          Settings
+          {t("Settings")}
         </button>
         <button
           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition"
           style={{ borderColor: theme.border, color: theme.text, background: theme.surface, marginInline: "4px" }}>
-          Help
+          {t("Help")}
         </button>
         <button
           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition"
           style={{ borderColor: theme.border, color: theme.text, background: theme.surface, marginInline: "4px" }}>
-          About
+          {t("About")}
         </button>
         <button
           onClick={onReset}
           className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition"
           style={{ borderColor: theme.border, color: theme.text, background: theme.surface, marginInline: "4px" }} aria-label="Reset all"
         >
-          Reset
+          {t("Reset")}
         </button>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 p-6 pt-4 max-w-5xl w-full">
@@ -582,12 +594,12 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset }) {
             {overallResult === "failed" ? (
               <>
                 <XCircle className="h-6 w-6" style={{ color: theme.danger }} />
-                <span className="text-lg font-semibold" style={{ color: theme.text }}>You are not eligible for Hajj, Hajj is not Wajib on you</span>
+                <span className="text-lg font-semibold" style={{ color: theme.text }}>{t("you_are_not_eligible")}</span>
               </>
             ) : (
               <>
                 <CheckCircle className="h-6 w-6" style={{ color: theme.success }} />
-                <span className="text-lg font-semibold" style={{ color: theme.text }}>You are eligible for Hajj, Hajj is Wajib on you</span>
+                <span className="text-lg font-semibold" style={{ color: theme.text }}>{t("you_are_eligible")}</span>
               </>
             )}
           </Card>
@@ -634,7 +646,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
 
     if (res?.complete) { ended = true; break; }           // END
     if (res && res.ok === false) {                        // FAIL
-      stop = { qIndex: qIdx, reason: res.reason || "Not eligible to continue." };
+      stop = { qIndex: qIdx, reason: res.reason || "NOT_ELIGIBLE_CONTINUE" };
       break;
     }
     if (res?.action === "resetTo" && res.nextNode) {      // jump
@@ -659,13 +671,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
 
 
 function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healthState, levels }) {
-  function resolvePhrase(raw) {
-    if (!raw) return "";
-    if (phrases && phrases[raw]) return phrases[raw];
-    const underscored = String(raw).split(' ').filter(Boolean).join('_');
-    if (phrases && phrases[underscored]) return phrases[underscored];
-    return String(raw);
-  }
+  const t = (key) => resolvePhrase(phrases, key);
 
 
   function defaultVars(healthState) {
@@ -708,7 +714,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
         break;
       }
       if (res && res.ok === false) { // FAIL
-        stop = { qIndex: qIdx, reason: res.reason || "Not eligible to continue." };
+        stop = { qIndex: qIdx, reason: res.reason || "NOT_ELIGIBLE_CONTINUE" };
         break;
       }
       if (res?.action === "resetTo" && res.nextNode) {
@@ -923,7 +929,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                     {isStopHere && (
                       <div className="mt-4 flex items-start gap-2 rounded-xl border p-3 text-sm" style={{ borderColor: theme.border, background: theme.surface, color: theme.text }}>
                         <Lock className="h-4 w-4" />
-                        <p bg="red">{resolvePhrase(stop?.reason || "L")}</p>
+                        <p bg="red">{t(stop?.reason)}</p>
                       </div>
                     )}
                   </div>
@@ -942,7 +948,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
               >
                 <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: theme.success }} />
                 <p>
-                  {resolvePhrase(vars && vars.END_PHRASE ? vars.END_PHRASE : "Eligsible")}
+                  {t(vars?.END_PHRASE)}
                   {/* check the line above for bug */}
                 </p>
               </div>
@@ -952,7 +958,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
             {stop && (
               <div className="flex items-start gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: theme.border, background: theme.surfaceSoft, color: theme.text }}>
                 <TriangleAlert className="mt-0.5 h-5 w-5" />
-                <p>{resolvePhrase(stop?.reason || "L")}</p>
+                <p>{t(stop?.reason)}</p>
               </div>
             )}
 
