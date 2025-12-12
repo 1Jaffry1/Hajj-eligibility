@@ -35,7 +35,7 @@ const STYLES = {
     success: "#5CC65C",
     danger: "#D32F2F",
     warn: "#F57C00",     // ORANGE
-    caution: "#FBC02D",  // YELLOW
+    caution: "#ffdc85ff",  // YELLOW
   },
 };
 
