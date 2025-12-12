@@ -842,13 +842,14 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                 <motion.div key={qIdx} initial={i === path.length - 1 ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ duration: 0.25, ease: "easeOut" }}>
                   <div className="rounded-2xl border p-5" style={{ background: STYLES.option3.surfaceSoft, borderColor: theme.border }}>
                     <div className="flex flex-col items-center gap-2">
-                      <p className="text-[15px] font-medium text-center" style={{ color: theme.text }}>{q}</p>
-                      {help && (
-                        <button onClick={() => setOpenHelpFor(openHelpFor === qIdx ? null : qIdx)} className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-sm" style={{ borderColor: theme.border, color: theme.text, background: theme.surface }} aria-expanded={openHelpFor === qIdx}>
-                          <CircleHelp className="h-4 w-4" />
-                          {/* <span>Help</span>  */}
-                        </button>
-                      )}
+                      <div className="flex items-center justify-center gap-2">
+                        <p className="text-[15px] font-medium text-center" style={{ color: theme.text }}>{q}</p>
+                        {help && (
+                          <button onClick={() => setOpenHelpFor(openHelpFor === qIdx ? null : qIdx)} className="inline-flex items-center gap-2 px-2 py-1 rounded-lg border text-sm flex-shrink-0" style={{ borderColor: theme.border, color: theme.text, background: theme.surface }} aria-expanded={openHelpFor === qIdx}>
+                            <CircleHelp className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
                       {openHelpFor === qIdx && (
                         <div className="w-full rounded-xl border p-3 text-sm" style={{ borderColor: theme.border, background: theme.surface, color: theme.text }}>{help}</div>
                       )}
