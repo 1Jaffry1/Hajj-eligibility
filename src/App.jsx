@@ -35,10 +35,10 @@ const STYLES = {
     success: "#5CC65C",
     danger: "#D32F2F",
     warn: "#E07B00",     // ORANGE (darker)
-    caution: "#FFD700",  // YELLOW (brighter/gold)
+    caution: "#0957ffff",  // YELLOW (brighter/gold)
     successbg: "rgba(92, 198, 92, 0.10)",
     warnbg: "rgba(224, 123, 0, 0.15)",
-    cautionbg: "rgba(255, 215, 0, 0.15)",
+    cautionbg: "rgba(0, 149, 255, 0.15)",
 
   },
 };
