@@ -37,7 +37,8 @@ const STYLES = {
     // warn: "#cd6700ff",     // ORANGE
     // caution: "#cdcf39ff",  // YELLOW
     warn: "#cd6700ff",     // ORANGE
-    caution: "#3b81aaff",  // YELLOW
+    caution: "#114d71ff",  // YELLOW
+    cautionbg: "#3b81aaff",
   },
 };
 
@@ -808,9 +809,12 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
   const getHealthColor = () => {
     if (levelId !== 2) return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
     const healthState = vars?.HEALTH_STATE;
+    // if (healthState === "GREEN") return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
+    // if (healthState === "ORANGE") return { color: theme.warn, bg: "rgba(245, 124, 0, 0.10)" };
+    // if (healthState === "YELLOW") return { color: theme.caution, bg: "rgba(251, 192, 45, 0.10)" };
     if (healthState === "GREEN") return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
     if (healthState === "ORANGE") return { color: theme.warn, bg: "rgba(245, 124, 0, 0.10)" };
-    if (healthState === "YELLOW") return { color: theme.caution, bg: "rgba(251, 192, 45, 0.10)" };
+    if (healthState === "YELLOW") return { color: theme.caution, bg: theme.cautionbg };
     return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
   };
 
