@@ -34,8 +34,8 @@ const STYLES = {
     accent: "#8f8f8fff",
     success: "#5CC65C",
     danger: "#D32F2F",
-    warn: "#F57C00",     // ORANGE
-    caution: "#ffdc85ff",  // YELLOW
+    warn: "#cd6700ff",     // ORANGE
+    caution: "#cdcf39ff",  // YELLOW
   },
 };
 
