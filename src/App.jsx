@@ -949,7 +949,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                   color: theme.text
                 }}
               >
-                <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: getHealthColor()?.color || theme.success }} />
+                <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: getHealthColor()?.color || theme.success }} />
                 <p>
                   {t(vars?.END_PHRASE)}
                   {/* check the line above for bug */}
@@ -960,7 +960,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
             {stop && (
               <div className="flex items-start gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: theme.danger, background: "rgba(211, 47, 47, 0.10)", color: theme.text }}>
-                <TriangleAlert className="mt-0.5 h-5 w-5" style={{ color: theme.danger }} />
+                <TriangleAlert className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: theme.danger }} />
                 <p>{t(stop?.reason)}</p>
               </div>
             )}
