@@ -673,6 +673,23 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
 function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healthState, levels }) {
   const t = (key) => resolvePhrase(phrases, key);
 
+  // Helper to get color and background based on END_STATE
+  function getStateColor(state) {
+    const normalizedState = String(state || "").toUpperCase();
+    switch (normalizedState) {
+      case "GREEN":
+        return { border: theme.success, bg: "rgba(92, 198, 92, 0.10)", icon: theme.success };
+      case "RED":
+        return { border: theme.danger, bg: "rgba(211, 47, 47, 0.10)", icon: theme.danger };
+      case "ORANGE":
+        return { border: theme.warn, bg: "rgba(245, 124, 0, 0.10)", icon: theme.warn };
+      case "YELLOW":
+        return { border: theme.caution, bg: "rgba(251, 192, 45, 0.10)", icon: theme.caution };
+      default:
+        return { border: theme.success, bg: "rgba(92, 198, 92, 0.10)", icon: theme.success };
+    }
+  }
+
 
   function defaultVars(healthState) {
     return {
@@ -925,13 +942,6 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                         <p>{info}</p>
                       </div>
                     )} */}
-
-                    {isStopHere && (
-                      <div className="mt-4 flex items-start gap-2 rounded-xl border p-3 text-sm" style={{ borderColor: theme.border, background: theme.surface, color: theme.text }}>
-                        <Lock className="h-4 w-4" />
-                        <p bg="red">{t(stop?.reason)}</p>
-                      </div>
-                    )}
                   </div>
                 </motion.div>
               );
@@ -941,12 +951,12 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
               <div
                 className="flex items-start gap-3 rounded-2xl border p-4 text-sm"
                 style={{
-                  borderColor: theme.success,
-                  background: "rgba(92, 198, 92, 0.10)", // subtle green tint
+                  borderColor: getStateColor(vars?.END_STATE).border,
+                  background: getStateColor(vars?.END_STATE).bg,
                   color: theme.text
                 }}
               >
-                <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: theme.success }} />
+                <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: getStateColor(vars?.END_STATE).icon }} />
                 <p>
                   {t(vars?.END_PHRASE)}
                   {/* check the line above for bug */}
@@ -956,8 +966,8 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
 
             {stop && (
-              <div className="flex items-start gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: theme.border, background: theme.surfaceSoft, color: theme.text }}>
-                <TriangleAlert className="mt-0.5 h-5 w-5" />
+              <div className="flex items-start gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: getStateColor(vars?.END_STATE).border, background: getStateColor(vars?.END_STATE).bg, color: theme.text }}>
+                <TriangleAlert className="mt-0.5 h-5 w-5" style={{ color: getStateColor(vars?.END_STATE).icon }} />
                 <p>{t(stop?.reason)}</p>
               </div>
             )}
