@@ -34,8 +34,10 @@ const STYLES = {
     accent: "#8f8f8fff",
     success: "#5CC65C",
     danger: "#D32F2F",
+    // warn: "#cd6700ff",     // ORANGE
+    // caution: "#cdcf39ff",  // YELLOW
     warn: "#cd6700ff",     // ORANGE
-    caution: "#cdcf39ff",  // YELLOW
+    caution: "#3b81aaff",  // YELLOW
   },
 };
 
