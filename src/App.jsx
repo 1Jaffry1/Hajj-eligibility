@@ -802,9 +802,8 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
   const allAnsweredAndEligible = ended || (!stop && path.every((q) => answers[q]));
 
-  // Determine color based on HEALTH_STATE for level 2
+  // Determine color based on HEALTH_STATE (for any level)
   const getHealthColor = () => {
-    if (levelId !== 2) return null;
     const healthState = vars?.HEALTH_STATE;
     if (healthState === "GREEN") return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
     if (healthState === "ORANGE") return { color: theme.warn, bg: "rgba(245, 124, 0, 0.10)" };
