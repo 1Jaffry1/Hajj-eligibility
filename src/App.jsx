@@ -673,23 +673,6 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
 function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healthState, levels }) {
   const t = (key) => resolvePhrase(phrases, key);
 
-  // Helper to get color and background based on END_STATE
-  function getStateColor(state) {
-    const normalizedState = String(state || "").toUpperCase();
-    switch (normalizedState) {
-      case "GREEN":
-        return { border: theme.success, bg: "rgba(92, 198, 92, 0.10)", icon: theme.success };
-      case "RED":
-        return { border: theme.danger, bg: "rgba(211, 47, 47, 0.10)", icon: theme.danger };
-      case "ORANGE":
-        return { border: theme.warn, bg: "rgba(245, 124, 0, 0.10)", icon: theme.warn };
-      case "YELLOW":
-        return { border: theme.caution, bg: "rgba(251, 192, 45, 0.10)", icon: theme.caution };
-      default:
-        return { border: theme.success, bg: "rgba(92, 198, 92, 0.10)", icon: theme.success };
-    }
-  }
-
 
   function defaultVars(healthState) {
     return {
@@ -951,12 +934,12 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
               <div
                 className="flex items-start gap-3 rounded-2xl border p-4 text-sm"
                 style={{
-                  borderColor: getStateColor(vars?.END_STATE).border,
-                  background: getStateColor(vars?.END_STATE).bg,
+                  borderColor: theme.success,
+                  background: "rgba(92, 198, 92, 0.10)", // subtle green tint
                   color: theme.text
                 }}
               >
-                <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: getStateColor(vars?.END_STATE).icon }} />
+                <CheckCircle className="mt-0.5 h-5 w-5" style={{ color: theme.success }} />
                 <p>
                   {t(vars?.END_PHRASE)}
                   {/* check the line above for bug */}
@@ -966,8 +949,8 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
 
             {stop && (
-              <div className="flex items-start gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: getStateColor(vars?.END_STATE).border, background: getStateColor(vars?.END_STATE).bg, color: theme.text }}>
-                <TriangleAlert className="mt-0.5 h-5 w-5" style={{ color: getStateColor(vars?.END_STATE).icon }} />
+              <div className="flex items-start gap-3 rounded-2xl border p-4 text-sm" style={{ borderColor: theme.danger, background: "rgba(211, 47, 47, 0.10)", color: theme.text }}>
+                <TriangleAlert className="mt-0.5 h-5 w-5" style={{ color: theme.danger }} />
                 <p>{t(stop?.reason)}</p>
               </div>
             )}
