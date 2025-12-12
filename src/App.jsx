@@ -1129,6 +1129,7 @@ export default function EligibilityApp() {
       statuses={statuses}
       overallResult={overallResult}
       levels={levels}
+      phrases={phrases}
       onReset={() => window.location.reload()}
     />
   ) : (
