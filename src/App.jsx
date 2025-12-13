@@ -461,10 +461,10 @@ function evalRoutesFor(levelRules, nodeId, uiAnswer, vars) {
       if (r.guard) {
         const gv = outVars[r.guard.field];
         if (opCompare(r.guard.op, gv, r.guard.value)) {
-          if (r.guard.next === "FAIL") return { ok: false, vars: outVars, reason: r.guard.reason || "L" };
-          if (r.guard.next === "END") return { ok: true, vars: outVars, complete: true };
-          if (r.guard.next) return { ok: true, vars: outVars, nextNode: r.guard.next };
-          return { ok: false, vars: outVars, reason: r.guard.reason || "L" };
+          if (r.guard.next === "FAIL") return { ok: false, vars: outVars, reason: r.guard.reason || "L", print: r.print };
+          if (r.guard.next === "END") return { ok: true, vars: outVars, complete: true, print: r.print };
+          if (r.guard.next) return { ok: true, vars: outVars, nextNode: r.guard.next, print: r.print };
+          return { ok: false, vars: outVars, reason: r.guard.reason || "L", print: r.print };
         }
         // guard present and did NOT match -> skip this route entirely
         continue;
@@ -477,13 +477,13 @@ function evalRoutesFor(levelRules, nodeId, uiAnswer, vars) {
       if (opCompare(when.op, left, right)) {
         if (r.set && typeof r.set === "object") Object.assign(outVars, r.set);
 
-        if (r.goto_node === "END") return { ok: true, vars: outVars, complete: true };
-        if (r.reset_to) return { ok: true, vars: outVars, action: "resetTo", nextNode: r.reset_to };
-        if (r.goto_node === "FAIL") return { ok: false, vars: outVars, reason: r.reason || "L" };
-        if (r.goto_node) return { ok: true, vars: outVars, nextNode: r.goto_node };
+        if (r.goto_node === "END") return { ok: true, vars: outVars, complete: true, print: r.print };
+        if (r.reset_to) return { ok: true, vars: outVars, action: "resetTo", nextNode: r.reset_to, print: r.print };
+        if (r.goto_node === "FAIL") return { ok: false, vars: outVars, reason: r.reason || "L", print: r.print };
+        if (r.goto_node) return { ok: true, vars: outVars, nextNode: r.goto_node, print: r.print };
 
         // matched route with no explicit next: DO NOT advance implicitly
-        return { ok: true, vars: outVars };
+        return { ok: true, vars: outVars, print: r.print };
       }
     }
   }
@@ -521,8 +521,23 @@ function resolvePhrase(phrases, raw) {
 /* =====================
    HOME
    ===================== */
-function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases }) {
+function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases, resultPhrases }) {
   const t = (key) => resolvePhrase(phrases, key);
+
+  // choose PHRASE from the logic sheet for overall banner
+  const failedLevel = levels.find((lvl) => statuses[lvl.id] === "failed");
+  const failedPhrase = failedLevel ? t(resultPhrases?.[failedLevel.id]) : "";
+
+  const completedLevelsWithPhrase = levels
+    .filter((lvl) => statuses[lvl.id] === "completed")
+    .map((lvl) => t(resultPhrases?.[lvl.id]));
+  const latestCompletedPhrase = completedLevelsWithPhrase.reverse().find(Boolean) || "";
+
+  const overallText = overallResult === "failed"
+    ? (failedPhrase || t("you_are_not_eligible"))
+    : (overallResult === "completed"
+      ? (latestCompletedPhrase || t("you_are_eligible"))
+      : "");
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center" style={{ background: theme.bg }}>
@@ -598,12 +613,12 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
             {overallResult === "failed" ? (
               <>
                 <XCircle className="h-6 w-6" style={{ color: theme.danger }} />
-                <span className="text-lg font-semibold" style={{ color: theme.text }}>{t("you_are_not_eligible")}</span>
+                <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
               </>
             ) : (
               <>
                 <CheckCircle className="h-6 w-6" style={{ color: theme.success }} />
-                <span className="text-lg font-semibold" style={{ color: theme.text }}>{t("you_are_eligible")}</span>
+                <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
               </>
             )}
           </Card>
@@ -631,6 +646,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
   const path = [];
   let stop = null;
   let ended = false;
+  let print = null;
 
   let qIdx = 0;
   const maxQ = (lvl.questions?.length ?? 0);
@@ -647,6 +663,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
 
     const res = passesRule(levelId, qIdx, val, { levelRules, vars });
     if (res?.vars) vars = res.vars;
+    if (res?.print) print = res.print;
 
     if (res?.complete) { ended = true; break; }           // END
     if (res && res.ok === false) {                        // FAIL
@@ -670,7 +687,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
   const prunedAnswers = {};
   for (const i of path) if (answersMap[i] !== undefined) prunedAnswers[i] = answersMap[i];
 
-  return { path, vars, stop, ended, answers: prunedAnswers };
+  return { path, vars, stop, ended, answers: prunedAnswers, print };
 }
 
 
@@ -692,6 +709,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
     const path = [];
     let stop = null;
     let ended = false;
+    let print = null;
 
     // walk from the start, applying answers if present
     let qIdx = 0;
@@ -712,6 +730,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
       const res = passesRule(levelId, qIdx, val, { levelRules, vars });
       if (res?.vars) vars = res.vars;
+      if (res?.print) print = res.print;
 
       if (res?.complete) { // END
         ended = true;
@@ -740,7 +759,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
       if (answersMap[i] !== undefined) prunedAnswers[i] = answersMap[i];
     }
 
-    return { path, vars, stop, ended, answers: prunedAnswers };
+    return { path, vars, stop, ended, answers: prunedAnswers, print };
   }
 
 
@@ -748,6 +767,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
   const [answers, setAnswers] = useState({});
   const [vars, setVars] = useState({});
+  const [resultPhrase, setResultPhrase] = useState(null);
 
   // useEffect(() => {
   //   setVars((v) => ({
@@ -788,7 +808,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
   function onAnswer(qIndex, value) {
     const nextAnswers = { ...answers, [qIndex]: value };
 
-    const { path: np, vars: nv, stop: ns, ended: ne, answers: na } = replayLevel({
+    const { path: np, vars: nv, stop: ns, ended: ne, answers: na, print: npPrint } = replayLevel({
       levelId,
       lvl,
       levelRules,
@@ -801,6 +821,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
     setPath(np);
     setStop(ns);
     setEnded(ne);
+    setResultPhrase(npPrint || null);
   }
 
 
@@ -819,9 +840,9 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
   function handleSave() {
     const status = stop ? "failed" : allAnsweredAndEligible ? "completed" : "idle";
-    onSave({ levelId, status, answers });
+    onSave({ levelId, status, answers, phrase: resultPhrase });
   }
-  function handleReset() { setAnswers({}); setPath([0]); setStop(null); setInfo(null); setOpenHelpFor(null); }
+  function handleReset() { setAnswers({}); setPath([0]); setStop(null); setOpenHelpFor(null); setResultPhrase(null); }
 
   return (
     <div className="min-h-screen w-full" style={{ background: theme.bg }}>
@@ -1020,6 +1041,7 @@ export default function EligibilityApp() {
 
   const [statuses, setStatuses] = useState({});
   const [savedAnswers, setSavedAnswers] = useState({});
+  const [resultPhrases, setResultPhrases] = useState({});
 
   const [texts, setTexts] = useState(null);
   const [logic, setLogic] = useState(null);
@@ -1138,6 +1160,7 @@ export default function EligibilityApp() {
       overallResult={overallResult}
       levels={levels}
       phrases={phrases}
+      resultPhrases={resultPhrases}
       onReset={() => window.location.reload()}
     />
   ) : (
@@ -1150,9 +1173,10 @@ export default function EligibilityApp() {
       phrases={phrases}
       healthState={derivedHealthState}
       levels={levels}
-      onSave={({ levelId: lid, status, answers }) => {
+      onSave={({ levelId: lid, status, answers, phrase }) => {
         setStatuses((prev) => ({ ...prev, [lid]: status }));
         setSavedAnswers((prev) => ({ ...prev, [lid]: answers }));
+        setResultPhrases((prev) => ({ ...prev, [lid]: phrase || null }));
         setScreen("home");
       }}
     />
