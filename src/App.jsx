@@ -455,36 +455,40 @@ function evalRoutesFor(levelRules, nodeId, uiAnswer, vars) {
 
   if (Array.isArray(node.routes)) {
     for (const r of node.routes) {
-      // GUARD HANDLING: if a guard is present, evaluate it.
-      // - If the guard *matches*, follow guard.next (FAIL/END/next) as before.
-      // - If the guard does *not* match, SKIP this route entirely (continue).
+      // Check option value FIRST
+      const when = r.when || {};
+      const left = outVars[when.field];
+      const right = when.value;
+      
+      // If option value doesn't match, skip this route entirely
+      if (!opCompare(when.op, left, right)) {
+        continue;
+      }
+
+      // Option matched - now check guard if present
       if (r.guard) {
         const gv = outVars[r.guard.field];
         if (opCompare(r.guard.op, gv, r.guard.value)) {
+          // Guard matched - follow guard action
           if (r.guard.next === "FAIL") return { ok: false, vars: outVars, reason: r.guard.reason || "L", print: r.print };
           if (r.guard.next === "END") return { ok: true, vars: outVars, complete: true, print: r.print };
           if (r.guard.next) return { ok: true, vars: outVars, nextNode: r.guard.next, print: r.print };
           return { ok: false, vars: outVars, reason: r.guard.reason || "L", print: r.print };
         }
-        // guard present and did NOT match -> skip this route entirely
+        // Guard present but did NOT match -> skip this route
         continue;
       }
 
-      // normal route (no guard)
-      const when = r.when || {};
-      const left = outVars[when.field];
-      const right = when.value;
-      if (opCompare(when.op, left, right)) {
-        if (r.set && typeof r.set === "object") Object.assign(outVars, r.set);
+      // Option matched, no guard (or guard didn't match) - proceed with normal route
+      if (r.set && typeof r.set === "object") Object.assign(outVars, r.set);
 
-        if (r.goto_node === "END") return { ok: true, vars: outVars, complete: true, print: r.print };
-        if (r.reset_to) return { ok: true, vars: outVars, action: "resetTo", nextNode: r.reset_to, print: r.print };
-        if (r.goto_node === "FAIL") return { ok: false, vars: outVars, reason: r.reason || "L", print: r.print };
-        if (r.goto_node) return { ok: true, vars: outVars, nextNode: r.goto_node, print: r.print };
+      if (r.goto_node === "END") return { ok: true, vars: outVars, complete: true, print: r.print };
+      if (r.reset_to) return { ok: true, vars: outVars, action: "resetTo", nextNode: r.reset_to, print: r.print };
+      if (r.goto_node === "FAIL") return { ok: false, vars: outVars, reason: r.reason || "L", print: r.print };
+      if (r.goto_node) return { ok: true, vars: outVars, nextNode: r.goto_node, print: r.print };
 
-        // matched route with no explicit next: DO NOT advance implicitly
-        return { ok: true, vars: outVars, print: r.print };
-      }
+      // matched route with no explicit next: DO NOT advance implicitly
+      return { ok: true, vars: outVars, print: r.print };
     }
   }
 
