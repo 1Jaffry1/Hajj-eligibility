@@ -471,8 +471,8 @@ function evalRoutesFor(levelRules, nodeId, uiAnswer, vars) {
         if (opCompare(r.guard.op, gv, r.guard.value)) {
           // Guard matched - follow guard action
           if (r.guard.next === "FAIL") return { ok: false, vars: outVars, reason: r.guard.reason || "L", print: r.print };
-          if (r.guard.next === "END") return { ok: true, vars: outVars, complete: true, print: r.print };
-          if (r.guard.next) return { ok: true, vars: outVars, nextNode: r.guard.next, print: r.print };
+          if (r.guard.next === "END") return { ok: true, vars: outVars, complete: true, print: r.print, guardReason: r.guard.reason };
+          if (r.guard.next) return { ok: true, vars: outVars, nextNode: r.guard.next, print: r.print, guardReason: r.guard.reason };
           return { ok: false, vars: outVars, reason: r.guard.reason || "L", print: r.print };
         }
         // Guard present but did NOT match -> skip this route
@@ -651,6 +651,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
   let stop = null;
   let ended = false;
   let print = null;
+  let guardReason = null;
 
   let qIdx = 0;
   const maxQ = (lvl.questions?.length ?? 0);
@@ -668,6 +669,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
     const res = passesRule(levelId, qIdx, val, { levelRules, vars });
     if (res?.vars) vars = res.vars;
     if (res?.print) print = res.print;
+    if (res?.guardReason) guardReason = res.guardReason;
 
     if (res?.complete) { ended = true; break; }           // END
     if (res && res.ok === false) {                        // FAIL
@@ -691,7 +693,7 @@ function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
   const prunedAnswers = {};
   for (const i of path) if (answersMap[i] !== undefined) prunedAnswers[i] = answersMap[i];
 
-  return { path, vars, stop, ended, answers: prunedAnswers, print };
+  return { path, vars, stop, ended, answers: prunedAnswers, print, guardReason };
 }
 
 
@@ -714,6 +716,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
     let stop = null;
     let ended = false;
     let print = null;
+    let guardReason = null;
 
     // walk from the start, applying answers if present
     let qIdx = 0;
@@ -735,6 +738,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
       const res = passesRule(levelId, qIdx, val, { levelRules, vars });
       if (res?.vars) vars = res.vars;
       if (res?.print) print = res.print;
+      if (res?.guardReason) guardReason = res.guardReason;
 
       if (res?.complete) { // END
         ended = true;
@@ -763,7 +767,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
       if (answersMap[i] !== undefined) prunedAnswers[i] = answersMap[i];
     }
 
-    return { path, vars, stop, ended, answers: prunedAnswers, print };
+    return { path, vars, stop, ended, answers: prunedAnswers, print, guardReason };
   }
 
 
@@ -772,6 +776,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
   const [answers, setAnswers] = useState({});
   const [vars, setVars] = useState({});
   const [resultPhrase, setResultPhrase] = useState(null);
+  const [guardReasonKey, setGuardReasonKey] = useState(null);
 
   // useEffect(() => {
   //   setVars((v) => ({
@@ -812,7 +817,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
   function onAnswer(qIndex, value) {
     const nextAnswers = { ...answers, [qIndex]: value };
 
-    const { path: np, vars: nv, stop: ns, ended: ne, answers: na, print: npPrint } = replayLevel({
+    const { path: np, vars: nv, stop: ns, ended: ne, answers: na, print: npPrint, guardReason: ngReason } = replayLevel({
       levelId,
       lvl,
       levelRules,
@@ -826,6 +831,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
     setStop(ns);
     setEnded(ne);
     setResultPhrase(npPrint || null);
+    setGuardReasonKey(ngReason || null);
   }
 
 
@@ -846,7 +852,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
     const status = stop ? "failed" : allAnsweredAndEligible ? "completed" : "idle";
     onSave({ levelId, status, answers, phrase: resultPhrase });
   }
-  function handleReset() { setAnswers({}); setPath([0]); setStop(null); setOpenHelpFor(null); setResultPhrase(null); }
+  function handleReset() { setAnswers({}); setPath([0]); setStop(null); setOpenHelpFor(null); setResultPhrase(null); setGuardReasonKey(null); }
 
   return (
     <div className="min-h-screen w-full" style={{ background: theme.bg }}>
@@ -981,8 +987,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
               >
                 <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0" style={{ color: getHealthColor()?.color || theme.success }} />
                 <p>
-                  {t(vars?.END_PHRASE)}
-                  {/* check the line above for bug */}
+                  {guardReasonKey ? t(guardReasonKey) : t(vars?.END_PHRASE)}
                 </p>
               </div>
             )}
