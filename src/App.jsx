@@ -1116,9 +1116,7 @@ export default function EligibilityApp() {
   }
 
   const completedLevels = Array.isArray(levels) ? levels.length : 0;
-  const derivedHealthState =
-    statuses[2] === "failed" ? "RED" :
-      statuses[2] === "completed" ? "GREEN" : "GREEN";
+  const derivedHealthState = healthByLevel[2] || "GREEN";
 
   const overallResult = Object.values(statuses).some((s) => s === "failed")
     ? "failed"
