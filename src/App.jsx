@@ -615,7 +615,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="mt-6 w-full max-w-5xl px-6">
           {(() => {
             // If level 2 has a HEALTH_STATE, use its color for the banner when not failed
-            const hs = healthByLevel?.[1];
+            const hs = healthByLevel?.[2];
             const healthColor = hs === "ORANGE" ? theme.warn : hs === "YELLOW" ? theme.caution : theme.success;
             const bannerBorder = overallResult === "failed" ? theme.danger : (hs ? healthColor : theme.success);
             return (
