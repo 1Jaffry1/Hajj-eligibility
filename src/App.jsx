@@ -525,7 +525,7 @@ function resolvePhrase(phrases, raw) {
 /* =====================
    HOME
    ===================== */
-function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases, resultPhrases }) {
+function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases, resultPhrases, healthByLevel }) {
   const t = (key) => resolvePhrase(phrases, key);
 
   // choose PHRASE from the logic sheet for overall banner
@@ -613,19 +613,27 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
 
       {overallResult && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="mt-6 w-full max-w-5xl px-6">
-          <Card className="rounded-3xl shadow-lg border-2 flex items-center justify-center gap-3 py-6" style={{ background: overallResult === "failed" ? theme.surfaceSoft : theme.surface, borderColor: overallResult === "failed" ? theme.danger : theme.success }}>
-            {overallResult === "failed" ? (
-              <>
-                <XCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: theme.danger }} />
-                <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
-              </>
-            ) : (
-              <>
-                <CheckCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: theme.success }} />
-                <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
-              </>
-            )}
-          </Card>
+          {(() => {
+            // If level 2 has a HEALTH_STATE, use its color for the banner when not failed
+            const hs = healthByLevel?.[1];
+            const healthColor = hs === "ORANGE" ? theme.warn : hs === "YELLOW" ? theme.caution : theme.success;
+            const bannerBorder = overallResult === "failed" ? theme.danger : (hs ? healthColor : theme.success);
+            return (
+              <Card className="rounded-3xl shadow-lg border-2 flex items-center justify-center gap-3 py-6" style={{ background: overallResult === "failed" ? theme.surfaceSoft : theme.surface, borderColor: bannerBorder }}>
+                {overallResult === "failed" ? (
+                  <>
+                    <XCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: theme.danger }} />
+                    <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: hs ? healthColor : theme.success }} />
+                    <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
+                  </>
+                )}
+              </Card>
+            );
+          })()}
         </motion.div>
       )}
     </div>
@@ -850,7 +858,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
   function handleSave() {
     const status = stop ? "failed" : allAnsweredAndEligible ? "completed" : "idle";
-    onSave({ levelId, status, answers, phrase: resultPhrase });
+    onSave({ levelId, status, answers, phrase: resultPhrase, healthState: vars?.HEALTH_STATE });
   }
   function handleReset() { setAnswers({}); setPath([0]); setStop(null); setOpenHelpFor(null); setResultPhrase(null); setGuardReasonKey(null); }
 
@@ -1051,6 +1059,7 @@ export default function EligibilityApp() {
   const [statuses, setStatuses] = useState({});
   const [savedAnswers, setSavedAnswers] = useState({});
   const [resultPhrases, setResultPhrases] = useState({});
+  const [healthByLevel, setHealthByLevel] = useState({});
 
   const [texts, setTexts] = useState(null);
   const [logic, setLogic] = useState(null);
@@ -1170,6 +1179,7 @@ export default function EligibilityApp() {
       levels={levels}
       phrases={phrases}
       resultPhrases={resultPhrases}
+      healthByLevel={healthByLevel}
       onReset={() => window.location.reload()}
     />
   ) : (
@@ -1182,10 +1192,14 @@ export default function EligibilityApp() {
       phrases={phrases}
       healthState={derivedHealthState}
       levels={levels}
-      onSave={({ levelId: lid, status, answers, phrase }) => {
+      onSave={({ levelId: lid, status, answers, phrase, healthState }) => {
         setStatuses((prev) => ({ ...prev, [lid]: status }));
         setSavedAnswers((prev) => ({ ...prev, [lid]: answers }));
         setResultPhrases((prev) => ({ ...prev, [lid]: phrase || null }));
+        // track per-level HEALTH_STATE for banner coloring (level 2)
+        if (typeof healthState === 'string') {
+          setHealthByLevel((prev) => ({ ...prev, [lid]: healthState }));
+        }
         setScreen("home");
       }}
     />
