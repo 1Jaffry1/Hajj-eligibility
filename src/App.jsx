@@ -650,7 +650,7 @@ function defaultVars(healthState) {
   return {
     NIYABAT: false,
     GIFT: false,
-    HEALTH_STATE: healthState || "GREEN",
+    HEALTH_STATE: healthState || "YELLOW",
     END_PHRASE: null,
   };
 }
@@ -715,7 +715,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
     return {
       NIYABAT: false,
       GIFT: false,
-      HEALTH_STATE: healthState || "GREEN",
+      HEALTH_STATE: healthState || "YELLOW",
       END_PHRASE: null,
     };
   }
@@ -1120,7 +1120,7 @@ export default function EligibilityApp() {
   const completedLevels = Array.isArray(levels) ? levels.length : 0;
   const derivedHealthState =
     statuses[2] === "failed" ? "RED" :
-      statuses[2] === "completed" ? "GREEN" : "GREEN";
+      statuses[2] === "completed" ? "GREEN" : "YELLOW";
 
   const overallResult = Object.values(statuses).some((s) => s === "failed")
     ? "failed"
