@@ -574,7 +574,21 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
           const Icon = lvl.icon || MoreHorizontal;
           const status = statuses[lvl.id] || "idle";
           const isLocked = lvl.id === 3 && !(statuses[2] === "completed");
-          const bcolor = status === "completed" ? theme.success : status === "failed" ? theme.danger : theme.border;
+          
+          // For level 2, use health state color when completed
+          let bcolor;
+          if (status === "failed") {
+            bcolor = theme.danger;
+          } else if (status === "completed") {
+            if (lvl.id === 2) {
+              const hs = healthByLevel[2];
+              bcolor = hs === "ORANGE" ? theme.warn : hs === "YELLOW" ? theme.caution : theme.success;
+            } else {
+              bcolor = theme.success;
+            }
+          } else {
+            bcolor = theme.border;
+          }
 
           return (
             <motion.div key={lvl.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05, duration: 0.35, ease: "easeOut" }}>
