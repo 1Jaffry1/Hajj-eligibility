@@ -616,12 +616,12 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
           <Card className="rounded-3xl shadow-lg border-2 flex items-center justify-center gap-3 py-6" style={{ background: overallResult === "failed" ? theme.surfaceSoft : theme.surface, borderColor: overallResult === "failed" ? theme.danger : theme.success }}>
             {overallResult === "failed" ? (
               <>
-                <XCircle className="h-6 w-6 flex-shrink-0" style={{ color: theme.danger }} />
+                <XCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: theme.danger }} />
                 <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
               </>
             ) : (
               <>
-                <CheckCircle className="h-6 w-6 flex-shrink-0" style={{ color: theme.success }} />
+                <CheckCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: theme.success }} />
                 <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
               </>
             )}
