@@ -615,11 +615,13 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="mt-6 w-full max-w-5xl px-6">
           {(() => {
             // If level 2 has a HEALTH_STATE, use its color for the banner when not failed
-            const hs = healthByLevel?.[2];
+            const rawHs = healthByLevel?.[2];
+            const hs = rawHs ? String(rawHs).trim().toUpperCase() : undefined;
             const healthColor = hs === "ORANGE" ? theme.warn : hs === "YELLOW" ? theme.caution : theme.success;
+            const healthBg = hs === "ORANGE" ? theme.warnbg : hs === "YELLOW" ? theme.cautionbg : theme.successbg;
             const bannerBorder = overallResult === "failed" ? theme.danger : (hs ? healthColor : theme.success);
             return (
-              <Card className="rounded-3xl shadow-lg border-2 flex items-center justify-center gap-3 py-6" style={{ background: overallResult === "failed" ? theme.surfaceSoft : theme.surface, borderColor: bannerBorder }}>
+              <Card className="rounded-3xl shadow-lg border-2 flex items-center justify-center gap-3 py-6" style={{ background: overallResult === "failed" ? theme.surfaceSoft : healthBg, borderColor: bannerBorder }}>
                 {overallResult === "failed" ? (
                   <>
                     <XCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: theme.danger }} />
