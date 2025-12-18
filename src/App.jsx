@@ -528,6 +528,8 @@ function resolvePhrase(phrases, raw) {
 function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases, resultPhrases, healthByLevel }) {
   const t = (key) => resolvePhrase(phrases, key);
 
+  const [openModal, setOpenModal] = useState(null);
+
   // choose PHRASE from the logic sheet for overall banner
   const failedLevel = levels.find((lvl) => statuses[lvl.id] === "failed");
   const failedPhrase = failedLevel ? t(resultPhrases?.[failedLevel.id]) : "";
@@ -545,43 +547,58 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center" style={{ background: theme.bg }}>
-      <div className="w-full max-w-5xl px-6 pt-6 flex justify-end">
-        <button
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition"
-          style={{ borderColor: theme.border, color: theme.text, background: theme.surface, marginInline: "4px" }}>
-          {t("Settings")}
-        </button>
-        <button
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition"
-          style={{ borderColor: theme.border, color: theme.text, background: theme.surface, marginInline: "4px" }}>
-          {t("Help")}
-        </button>
-        <button
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition"
-          style={{ borderColor: theme.border, color: theme.text, background: theme.surface, marginInline: "4px" }}>
-          {t("About")}
-        </button>
-        <button
-          onClick={onReset}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition"
-          style={{ borderColor: theme.border, color: theme.text, background: theme.surface, marginInline: "4px" }} aria-label="Reset all"
-        >
-          {t("Reset")}
-        </button>
+      {/* Menu Bar Header */}
+      <div className="w-full" style={{ background: theme.surface, borderBottom: `2px solid ${theme.border}` }}>
+        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="text-lg font-semibold" style={{ color: theme.title }}>
+            Hajj Eligibility
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setOpenModal("settings")}
+              className="px-4 py-2 rounded-lg border text-sm font-medium transition hover:bg-opacity-80"
+              style={{ borderColor: theme.border, color: theme.text, background: theme.surface, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+              title="Adjust app settings">
+              {t("Settings")}
+            </button>
+            <button
+              onClick={() => setOpenModal("help")}
+              className="px-4 py-2 rounded-lg border text-sm font-medium transition hover:bg-opacity-80"
+              style={{ borderColor: theme.border, color: theme.text, background: theme.surface, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+              title="View help documentation">
+              {t("Help")}
+            </button>
+            <button
+              onClick={() => setOpenModal("about")}
+              className="px-4 py-2 rounded-lg border text-sm font-medium transition hover:bg-opacity-80"
+              style={{ borderColor: theme.border, color: theme.text, background: theme.surface, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+              title="Learn about this app">
+              {t("About")}
+            </button>
+            <div style={{ width: "1px", height: "24px", background: theme.border, margin: "0 4px" }}></div>
+            <button
+              onClick={onReset}
+              className="px-4 py-2 rounded-lg border text-sm font-medium transition hover:bg-opacity-80"
+              style={{ borderColor: theme.caution, color: theme.caution, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+              aria-label="Reset all">
+              {t("Reset")}
+            </button>
+          </div>
+        </div>
       </div>
-      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 p-6 pt-4 max-w-5xl w-full">
+      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 p-6 max-w-5xl w-full">
         {levels.map((lvl, idx) => {
           const Icon = lvl.icon || MoreHorizontal;
           const status = statuses[lvl.id] || "idle";
           const isLocked = lvl.id === 3 && !(statuses[2] === "completed");
           
-          // For level 2, use health state color when completed
+          // For level 1 and 2, use health state color when completed
           let bcolor;
           if (status === "failed") {
             bcolor = theme.danger;
           } else if (status === "completed") {
-            if (lvl.id === 2) {
-              const hs = healthByLevel[2];
+            if (lvl.id === 1 || lvl.id === 2) {
+              const hs = healthByLevel[lvl.id];
               bcolor = hs === "ORANGE" ? theme.warn : hs === "YELLOW" ? theme.caution : theme.success;
             } else {
               bcolor = theme.success;
@@ -628,10 +645,13 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
       {overallResult && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="mt-6 w-full max-w-5xl px-6">
           {(() => {
-            // If level 2 has a HEALTH_STATE, use its color for the banner when not failed
-            const hs = healthByLevel?.[2];
-            const healthColor = hs === "ORANGE" ? theme.warn : hs === "YELLOW" ? theme.caution : theme.success;
-            const bannerBorder = overallResult === "failed" ? theme.danger : (hs ? healthColor : theme.success);
+            // Prioritize health states: force (ORANGE) > choice (YELLOW) > false (GREEN)
+            const hs1 = healthByLevel?.[1];
+            const hs2 = healthByLevel?.[2];
+            // Use ORANGE if either level has it, else YELLOW if either has it, else GREEN
+            const finalHealthState = (hs1 === "ORANGE" || hs2 === "ORANGE") ? "ORANGE" : (hs1 === "YELLOW" || hs2 === "YELLOW") ? "YELLOW" : "GREEN";
+            const healthColor = finalHealthState === "ORANGE" ? theme.warn : finalHealthState === "YELLOW" ? theme.caution : theme.success;
+            const bannerBorder = overallResult === "failed" ? theme.danger : (finalHealthState !== "GREEN" ? healthColor : theme.success);
             return (
               <Card className="rounded-3xl shadow-lg border-2 flex items-center justify-center gap-3 py-6" style={{ background: overallResult === "failed" ? theme.surfaceSoft : theme.surface, borderColor: bannerBorder }}>
                 {overallResult === "failed" ? (
@@ -650,6 +670,130 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
           })()}
         </motion.div>
       )}
+
+      {/* Modal Overlay */}
+      {openModal && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center p-4 z-50"
+          style={{ background: "rgba(0, 0, 0, 0.8)" }}
+          onClick={() => setOpenModal(null)}
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            transition={{ duration: 0.2 }}
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-3xl shadow-2xl max-w-lg w-full"
+            style={{ background: theme.surface, borderColor: theme.border, border: "2px solid" + theme.border }}
+          >
+            <div className="p-6">
+              {/* Settings Modal */}
+              {openModal === "settings" && (
+                <>
+                  <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>Settings</h3>
+                  <div className="space-y-4 mb-6" style={{ color: theme.text }}>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Language</label>
+                      <select
+                        className="w-full px-3 py-2 rounded-lg border focus:outline-none"
+                        style={{ borderColor: theme.border, background: theme.surfaceSoft, color: theme.text }}>
+                        <option value="en">English</option>
+                        <option value="ar">العربية</option>
+                        <option value="ur">اردو</option>
+                        <option value="fa">فارسی</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Marja'</label>
+                      <select
+                        className="w-full px-3 py-2 rounded-lg border focus:outline-none"
+                        style={{ borderColor: theme.border, background: theme.surfaceSoft, color: theme.text }}>
+                        <option value="sistani"> Ayatollah Sistani</option>
+                        <option value="khamenei"> Ayatollah Khamenei</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Help Modal */}
+              {openModal === "help" && (
+                <>
+                  <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>Help</h3>
+                  <div className="space-y-3 mb-6" style={{ color: theme.text }}>
+                    <div>
+                      <h4 className="font-semibold mb-2">How to use this app</h4>
+                      <p className="text-sm" style={{ color: theme.accent }}>
+                        Click on each category (Personal, Health, Financial, Travel, Time, Miscellaneous) to answer questions and determine your Hajj eligibility.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">Understanding the colors</h4>
+                      <p className="text-sm" style={{ color: theme.accent }}>
+                        <span style={{ color: theme.success }}>Green</span> = Eligible, 
+                        <span style={{ color: theme.warn }}> Orange</span> = Health concerns, 
+                        <span style={{ color: theme.caution }}> Blue</span> = Additional guidance needed
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">Need more information?</h4>
+                      <p className="text-sm" style={{ color: theme.accent }}>
+                        Click the help icon (?) next to each question for additional details.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* About Modal */}
+              {openModal === "about" && (
+                <>
+                  <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>About</h3>
+                  <div className="space-y-3 mb-6" style={{ color: theme.text }}>
+                    <div>
+                      <h4 className="font-semibold mb-1">Hajj Eligibility Checker</h4>
+                      <p className="text-sm" style={{ color: theme.accent }}>
+                        Version 1.0
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg" style={{ background: theme.surfaceSoft }}>
+                      <p className="text-sm" style={{ color: theme.accent }}>
+                        This application helps determine whether you meet the basic requirements and health standards for performing Hajj. 
+                        Answer questions across six categories to receive a personalized eligibility assessment.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1">Important Notice</h4>
+                      <p className="text-xs" style={{ color: theme.accent }}>
+                        This tool provides general guidance only. Please consult with relevant authorities and healthcare professionals for official approval.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Close Button */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    // Save action - could store language/marja' preferences here
+                    setOpenModal(null);
+                  }}
+                  className="flex-1 px-4 py-2 rounded-lg font-medium transition"
+                  style={{ background: theme.accent, color: "white" }}>
+                  Save
+                </button>
+                <button
+                  onClick={() => setOpenModal(null)}
+                  className="flex-1 px-4 py-2 rounded-lg font-medium transition"
+                  style={{ background: theme.border, color: theme.text }}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -658,17 +802,23 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
    LEVEL WIZARD
    ===================== */
 
-function defaultVars(healthState) {
+function getHealthStateFromNiyabat(niyabat) {
+  if (niyabat === false) return "GREEN";
+  if (niyabat === "force") return "ORANGE";
+  if (niyabat === "choice") return "YELLOW";
+  return "GREEN";
+}
+
+function defaultVars() {
   return {
     NIYABAT: false,
     GIFT: false,
-    HEALTH_STATE: healthState || "GREEN",
     END_PHRASE: null,
   };
 }
 
-function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
-  let vars = { ...defaultVars(healthState) };
+function replayLevel({ levelId, lvl, levelRules, answersMap }) {
+  let vars = { ...defaultVars() };
   const path = [];
   let stop = null;
   let ended = false;
@@ -723,17 +873,16 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
   const t = (key) => resolvePhrase(phrases, key);
 
 
-  function defaultVars(healthState) {
+  function defaultVars() {
     return {
       NIYABAT: false,
       GIFT: false,
-      HEALTH_STATE: healthState || "GREEN",
       END_PHRASE: null,
     };
   }
 
-  function replayLevel({ levelId, lvl, levelRules, answersMap, healthState }) {
-    let vars = { ...defaultVars(healthState) };
+  function replayLevel({ levelId, lvl, levelRules, answersMap }) {
+    let vars = { ...defaultVars() };
     const path = [];
     let stop = null;
     let ended = false;
@@ -844,7 +993,6 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
       lvl,
       levelRules,
       answersMap: nextAnswers,
-      healthState,
     });
 
     setAnswers(na);
@@ -859,10 +1007,9 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
   const allAnsweredAndEligible = ended || (!stop && path.every((q) => answers[q]));
 
-  // Determine color based on HEALTH_STATE (for level 2 only)
+  // Determine color based on NIYABAT (for level 1 and 2)
   const getHealthColor = () => {
-    if (levelId !== 2) return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
-    const healthState = vars?.HEALTH_STATE;
+    const healthState = getHealthStateFromNiyabat(vars?.NIYABAT);
 
     if (healthState === "GREEN") return { color: theme.success, bg: theme.successbg };
     if (healthState === "ORANGE") return { color: theme.warn, bg: theme.warnbg };
@@ -872,7 +1019,8 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
   function handleSave() {
     const status = stop ? "failed" : allAnsweredAndEligible ? "completed" : "idle";
-    onSave({ levelId, status, answers, phrase: resultPhrase, healthState: vars?.HEALTH_STATE });
+    const derivedHealthState = getHealthStateFromNiyabat(vars?.NIYABAT);
+    onSave({ levelId, status, answers, phrase: resultPhrase, healthState: derivedHealthState });
   }
   function handleReset() { setAnswers({}); setPath([0]); setStop(null); setOpenHelpFor(null); setResultPhrase(null); setGuardReasonKey(null); }
 
