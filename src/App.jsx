@@ -35,7 +35,7 @@ const STYLES = {
     success: "#5CC65C",
     danger: "#D32F2F",
     warn: "#E07B00",     // ORANGE (darker)
-    caution: "#0957ffff",  // YELLOW (brighter/gold)
+    caution: "#0957ffff",  // BLUE (brighter/gold)
     successbg: "rgba(92, 198, 92, 0.10)",
     warnbg: "rgba(224, 123, 0, 0.15)",
     cautionbg: "rgba(0, 149, 255, 0.15)",
@@ -599,7 +599,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
           } else if (status === "completed") {
             if (lvl.id === 1 || lvl.id === 2) {
               const hs = healthByLevel[lvl.id];
-              bcolor = hs === "ORANGE" ? theme.warn : hs === "YELLOW" ? theme.caution : theme.success;
+              bcolor = hs === "ORANGE" ? theme.warn : hs === "BLUE" ? theme.caution : theme.success;
             } else {
               bcolor = theme.success;
             }
@@ -645,12 +645,12 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
       {overallResult && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="mt-6 w-full max-w-5xl px-6">
           {(() => {
-            // Prioritize health states: force (ORANGE) > choice (YELLOW) > false (GREEN)
+            // Prioritize health states: force (ORANGE) > choice (BLUE) > false (GREEN)
             const hs1 = healthByLevel?.[1];
             const hs2 = healthByLevel?.[2];
-            // Use ORANGE if either level has it, else YELLOW if either has it, else GREEN
-            const finalHealthState = (hs1 === "ORANGE" || hs2 === "ORANGE") ? "ORANGE" : (hs1 === "YELLOW" || hs2 === "YELLOW") ? "YELLOW" : "GREEN";
-            const healthColor = finalHealthState === "ORANGE" ? theme.warn : finalHealthState === "YELLOW" ? theme.caution : theme.success;
+            // Use ORANGE if either level has it, else BLUE if either has it, else GREEN
+            const finalHealthState = (hs1 === "ORANGE" || hs2 === "ORANGE") ? "ORANGE" : (hs1 === "BLUE" || hs2 === "BLUE") ? "BLUE" : "GREEN";
+            const healthColor = finalHealthState === "ORANGE" ? theme.warn : finalHealthState === "BLUE" ? theme.caution : theme.success;
             const bannerBorder = overallResult === "failed" ? theme.danger : (finalHealthState !== "GREEN" ? healthColor : theme.success);
             return (
               <Card className="rounded-3xl shadow-lg border-2 flex items-center justify-center gap-3 py-6" style={{ background: overallResult === "failed" ? theme.surfaceSoft : theme.surface, borderColor: bannerBorder }}>
@@ -720,26 +720,41 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
               {openModal === "help" && (
                 <>
                   <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>Help</h3>
-                  <div className="space-y-3 mb-6" style={{ color: theme.text }}>
-                    <div>
-                      <h4 className="font-semibold mb-2">How to use this app</h4>
-                      <p className="text-sm" style={{ color: theme.accent }}>
-                        Click on each category (Personal, Health, Financial, Travel, Time, Miscellaneous) to answer questions and determine your Hajj eligibility.
+                  <div className="space-y-4 mb-6" style={{ color: theme.text }}>
+                    <div className="p-3 rounded-lg" style={{ background: theme.surfaceSoft }}>
+                      <p className="text-sm leading-relaxed" style={{ color: theme.accent }}>
+                        The Hajj Ability Calculator is a tool designed to help you evaluate your eligibility for Hajjatul Islam for those who do not live in Makkah.
                       </p>
                     </div>
+                    
                     <div>
-                      <h4 className="font-semibold mb-2">Understanding the colors</h4>
-                      <p className="text-sm" style={{ color: theme.accent }}>
-                        <span style={{ color: theme.success }}>Green</span> = Eligible, 
-                        <span style={{ color: theme.warn }}> Orange</span> = Health concerns, 
-                        <span style={{ color: theme.caution }}> Blue</span> = Additional guidance needed
-                      </p>
+                      <h4 className="font-semibold mb-2">In order to calculate your eligibility for:</h4>
+                      <div className="space-y-2 text-sm" style={{ color: theme.accent }}>
+                        <p>
+                          <span className="font-semibold">Current year:</span> Answer the questionnaires to figure out your eligibility.
+                        </p>
+                        <p>
+                          <span className="font-semibold">Previous years:</span> Enter the information that applied to you at that time. If you qualified for Hajj (i.e. Hajj was obligatory) in that year but you didn't go for Hajj, then in certain cases it is still an obligation on you today, even if you have now lost the ability to go for Hajj.
+                        </p>
+                      </div>
                     </div>
+
                     <div>
-                      <h4 className="font-semibold mb-2">Need more information?</h4>
-                      <p className="text-sm" style={{ color: theme.accent }}>
-                        Click the help icon (?) next to each question for additional details.
-                      </p>
+                      <h4 className="font-semibold mb-2">Understanding the test result colors:</h4>
+                      <div className="space-y-2 text-sm" style={{ color: theme.accent }}>
+                        <p>
+                          <span className="font-semibold" style={{ color: theme.success }}>Green:</span> Test passed successfully.
+                        </p>
+                        <p>
+                          <span className="font-semibold" style={{ color: theme.warn }}>Orange:</span> Test passed, however you have to send a proxy.
+                        </p>
+                        <p>
+                          <span className="font-semibold" style={{ color: theme.caution }}>Blue:</span> Test passed, you have a choice between performing Hajj this year or waiting for recovery and performing it later. Performing it later is preferred.
+                        </p>
+                        <p>
+                          <span className="font-semibold" style={{ color: theme.danger }}>Red:</span> Test failed.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </>
@@ -748,24 +763,21 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
               {/* About Modal */}
               {openModal === "about" && (
                 <>
-                  <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>About</h3>
-                  <div className="space-y-3 mb-6" style={{ color: theme.text }}>
-                    <div>
-                      <h4 className="font-semibold mb-1">Hajj Eligibility Checker</h4>
-                      <p className="text-sm" style={{ color: theme.accent }}>
-                        Version 1.0
-                      </p>
-                    </div>
+                  <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>The Hajj Ability Calculator</h3>
+                  <div className="space-y-4 mb-6" style={{ color: theme.text }}>
                     <div className="p-3 rounded-lg" style={{ background: theme.surfaceSoft }}>
-                      <p className="text-sm" style={{ color: theme.accent }}>
-                        This application helps determine whether you meet the basic requirements and health standards for performing Hajj. 
-                        Answer questions across six categories to receive a personalized eligibility assessment.
+                      <p className="text-sm leading-relaxed" style={{ color: theme.accent }}>
+                        The Hajj Ability Calculator is a tool designed to help you evaluate your eligibility for Hajj.
                       </p>
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-1">Important Notice</h4>
-                      <p className="text-xs" style={{ color: theme.accent }}>
-                        This tool provides general guidance only. Please consult with relevant authorities and healthcare professionals for official approval.
+                      <p className="text-sm" style={{ color: theme.accent }}>
+                        <span className="font-semibold">Created by</span> Tibyan Academy
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm" style={{ color: theme.accent }}>
+                        <span className="font-semibold">Developed by</span> Vedocode
                       </p>
                     </div>
                   </div>
@@ -805,7 +817,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
 function getHealthStateFromNiyabat(niyabat) {
   if (niyabat === false) return "GREEN";
   if (niyabat === "force") return "ORANGE";
-  if (niyabat === "choice") return "YELLOW";
+  if (niyabat === "choice") return "BLUE";
   return "GREEN";
 }
 
@@ -1013,7 +1025,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
 
     if (healthState === "GREEN") return { color: theme.success, bg: theme.successbg };
     if (healthState === "ORANGE") return { color: theme.warn, bg: theme.warnbg };
-    if (healthState === "YELLOW") return { color: theme.caution, bg: theme.cautionbg };
+    if (healthState === "BLUE") return { color: theme.caution, bg: theme.cautionbg };
     return { color: theme.success, bg: "rgba(92, 198, 92, 0.10)" };
   };
 
