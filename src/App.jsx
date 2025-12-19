@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 // ... (the full JSX code was generated in the previous step)
 // This file includes a robust CSV parser and a few dev-time tests to catch regressions.
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
   HeartPulse,
@@ -820,21 +820,29 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
       )}
 
       {/* Modal Overlay */}
-      {openModal && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center p-4 z-50"
-          style={{ background: "rgba(0, 0, 0, 0.8)" }}
-          onClick={() => setOpenModal(null)}
-        >
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }} 
-            animate={{ opacity: 1, scale: 1 }} 
-            transition={{ duration: 0.2 }}
-            onClick={(e) => e.stopPropagation()}
-            className="rounded-3xl shadow-2xl max-w-lg w-full"
-            style={{ background: theme.surface, borderColor: theme.border, border: "2px solid" + theme.border }}
+      <AnimatePresence>
+        {openModal && (
+          <motion.div
+            key="modal-overlay"
+            className="fixed inset-0 flex items-center justify-center p-4 z-50"
+            style={{ background: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(2px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            onClick={() => setOpenModal(null)}
           >
-            <div className="p-6">
+            <motion.div
+              key="modal-content"
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 8 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-3xl shadow-2xl max-w-lg w-full"
+              style={{ background: theme.surface, borderColor: theme.border, border: "2px solid " + theme.border }}
+            >
+              <div className="p-6">
               {/* Settings Modal */}
               {openModal === "settings" && (
                 <>
@@ -873,14 +881,14 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                   <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>Help</h3>
                   <div className="space-y-4 mb-6" style={{ color: theme.text }}>
                     <div className="p-3 rounded-lg" style={{ background: theme.surfaceSoft }}>
-                      <p className="text-sm leading-relaxed" style={{ color: theme.accent }}>
+                      <p className="text-sm leading-relaxed" style={{ color: "black" }}>
                         The Hajj Ability Calculator is a tool designed to help you evaluate your eligibility for Hajjatul Islam for those who do not live in Makkah.
                       </p>
                     </div>
                     
                     <div>
                       <h4 className="font-semibold mb-2">In order to calculate your eligibility for:</h4>
-                      <div className="space-y-2 text-sm" style={{ color: theme.accent }}>
+                      <div className="space-y-2 text-sm" style={{ color:  theme.accent }}>
                         <p>
                           <span className="font-semibold">Current year:</span> Answer the questionnaires to figure out your eligibility.
                         </p>
@@ -917,7 +925,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                   <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>The Hajj Ability Calculator</h3>
                   <div className="space-y-4 mb-6" style={{ color: theme.text }}>
                     <div className="p-3 rounded-lg" style={{ background: theme.surfaceSoft }}>
-                      <p className="text-sm leading-relaxed" style={{ color: theme.accent }}>
+                      <p className="text-sm leading-relaxed" style={{ color: "black" }}>
                         The Hajj Ability Calculator is a tool designed to help you evaluate your eligibility for Hajj.
                       </p>
                     </div>
@@ -952,8 +960,9 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
               </div>
             </div>
           </motion.div>
-        </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
