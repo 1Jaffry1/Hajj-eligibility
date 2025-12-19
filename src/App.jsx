@@ -16,9 +16,13 @@ import {
   CheckCircle,
   XCircle,
   CircleHelp,
+  Settings,
+  Info,
+  Menu,
+  X,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 
 /* =====================
    THEME
@@ -108,6 +112,55 @@ function parseCSV(text) {
   const idx = (name) => headerLC.indexOf(String(name).toLowerCase());
 
   return { header, data, idx };
+}
+
+/* =====================
+   UI: Marja Avatar (uses image with fallback)
+   ===================== */
+function MarjaAvatar({ theme, selectedMarja }) {
+  const srcMap = {
+    sistani: "/images/marja/sistani.png",
+    khamenei: "/images/marja/khamenei.png",
+  };
+  const src = srcMap[selectedMarja] || null;
+  const [imgError, setImgError] = useState(false);
+  return (
+    <div
+      className="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center"
+      style={{ background: theme.surfaceSoft, border: `1px solid ${theme.border}` }}
+    >
+      {!imgError && src ? (
+        <img
+          src={src}
+          alt={selectedMarja === 'khamenei' ? 'Ayatollah Khamenei' : 'Ayatollah Sistani'}
+          className="h-full w-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <User className="h-4 w-4" style={{ color: theme.text }} />
+      )}
+    </div>
+  );
+}
+
+/* =====================
+   UI: Logo Image (square, fallback to emoji)
+   ===================== */
+function LogoImage({ theme, src, alt = "Logo" }) {
+  const [imgError, setImgError] = useState(false);
+  // Display the logo at a consistent header height, maintain aspect ratio
+  // No border or background per request
+  if (imgError) {
+    return <span style={{ color: theme.text, fontSize: 16 }}>🕋</span>;
+  }
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="h-12 sm:h-8 w-auto object-contain"
+      onError={() => setImgError(true)}
+    />
+  );
 }
 
 /* =====================
@@ -529,6 +582,21 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
   const t = (key) => resolvePhrase(phrases, key);
 
   const [openModal, setOpenModal] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Persist selected Marja in localStorage so the avatar can reflect it
+  const [selectedMarja, setSelectedMarja] = useState(() => {
+    if (typeof window === 'undefined') return 'sistani';
+    return localStorage.getItem('marja') || 'sistani';
+  });
+
+  // Auto-open settings on first visit
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('hajj_app_visited');
+    if (!hasVisited) {
+      setOpenModal('settings');
+      try { localStorage.setItem('hajj_app_visited', 'true'); } catch {}
+    }
+  }, []);
 
   // choose PHRASE from the logic sheet for overall banner
   const failedLevel = levels.find((lvl) => statuses[lvl.id] === "failed");
@@ -547,44 +615,124 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center" style={{ background: theme.bg }}>
-      {/* Menu Bar Header */}
+      {/* Header */}
       <div className="w-full" style={{ background: theme.surface, borderBottom: `2px solid ${theme.border}` }}>
-        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="text-lg font-semibold" style={{ color: theme.title }}>
-            Hajj Eligibility
+        {/* Main header: title + logo + buttons (responsive layout) */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Left: Logo + Title */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 flex-1">
+            <LogoImage theme={theme} src="/images/logos/tibyan.png" alt="Tibyan Academy" />
+            <div className="text-2xl sm:text-3xl font-bold tracking-wide" style={{ color: theme.title }}>
+              Hajj Eligibility
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Right: Action buttons */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Marja selector */}
             <button
               onClick={() => setOpenModal("settings")}
-              className="px-4 py-2 rounded-lg border text-sm font-medium transition hover:bg-opacity-80"
-              style={{ borderColor: theme.border, color: theme.text, background: theme.surface, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-              title="Adjust app settings">
-              {t("Settings")}
+              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg border transition hover:shadow-md focus:outline-none"
+              style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+              title="Change language or marja"
+              aria-label="Change language or marja">
+              <MarjaAvatar theme={theme} selectedMarja={selectedMarja} />
+              <div className="text-sm font-medium">
+                {selectedMarja === 'khamenei' ? 'Ayatollah Khamenei' : 'Ayatollah Sistani'}
+              </div>
             </button>
+
+            {/* Icon buttons: Settings, Help, About, Reset (hidden on mobile) */}
+            <div className="hidden sm:flex items-center gap-2">
+              <button
+                onClick={() => setOpenModal("settings")}
+                className="px-3 py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
+                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+                title={t("Settings")} aria-label={t("Settings")}>
+                <Settings className="h-6 w-6" />
+              </button>
+              <button
+                onClick={() => setOpenModal("help")}
+                className="px-3 py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
+                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+                title={t("Help")} aria-label={t("Help")}>
+                <CircleHelp className="h-6 w-6" />
+              </button>
+              <button
+                onClick={() => setOpenModal("about")}
+                className="px-3 py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
+                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+                title={t("About")} aria-label={t("About")}>
+                <Info className="h-6 w-6" />
+              </button>
+              <button
+                onClick={onReset}
+                className="inline-flex items-center gap-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition hover:shadow-md"
+                style={{ borderColor: theme.caution, color: theme.caution, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+                title={t("Reset")} aria-label={t("Reset")}>
+                <RotateCcw className="h-6 w-6" />
+                <span>{t("Reset")}</span>
+              </button>
+            </div>
+
+            {/* Mobile hamburger menu */}
             <button
-              onClick={() => setOpenModal("help")}
-              className="px-4 py-2 rounded-lg border text-sm font-medium transition hover:bg-opacity-80"
-              style={{ borderColor: theme.border, color: theme.text, background: theme.surface, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-              title="View help documentation">
-              {t("Help")}
-            </button>
-            <button
-              onClick={() => setOpenModal("about")}
-              className="px-4 py-2 rounded-lg border text-sm font-medium transition hover:bg-opacity-80"
-              style={{ borderColor: theme.border, color: theme.text, background: theme.surface, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-              title="Learn about this app">
-              {t("About")}
-            </button>
-            <div style={{ width: "1px", height: "24px", background: theme.border, margin: "0 4px" }}></div>
-            <button
-              onClick={onReset}
-              className="px-4 py-2 rounded-lg border text-sm font-medium transition hover:bg-opacity-80"
-              style={{ borderColor: theme.caution, color: theme.caution, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-              aria-label="Reset all">
-              {t("Reset")}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="sm:hidden px-3 py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
+              style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+              title="Menu" aria-label="Menu">
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile menu (visible only on small screens when open) */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden max-w-5xl mx-auto px-4 pb-3 border-t" style={{ borderColor: theme.border }}>
+            <div className="flex flex-col gap-2 pt-3">
+              <button
+                onClick={() => {
+                  setOpenModal("settings");
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
+                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+                <Settings className="h-5 w-5" />
+                <span className="text-sm font-medium">{t("Settings")}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setOpenModal("help");
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
+                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+                <CircleHelp className="h-5 w-5" />
+                <span className="text-sm font-medium">{t("Help")}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setOpenModal("about");
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
+                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+                <Info className="h-5 w-5" />
+                <span className="text-sm font-medium">{t("About")}</span>
+              </button>
+              <button
+                onClick={() => {
+                  onReset();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full px-3 py-2.5 flex items-center gap-1 rounded-lg border transition hover:shadow-md text-left text-xs font-medium"
+                style={{ borderColor: theme.caution, color: theme.caution, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+                <RotateCcw className="h-5 w-5" />
+                <span>{t("Reset")}</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 p-6 max-w-5xl w-full">
         {levels.map((lvl, idx) => {
@@ -707,7 +855,10 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                       <label className="block text-sm font-semibold mb-2">Marja'</label>
                       <select
                         className="w-full px-3 py-2 rounded-lg border focus:outline-none"
-                        style={{ borderColor: theme.border, background: theme.surfaceSoft, color: theme.text }}>
+                        style={{ borderColor: theme.border, background: theme.surfaceSoft, color: theme.text }}
+                        value={selectedMarja}
+                        onChange={(e) => setSelectedMarja(e.target.value)}
+                      >
                         <option value="sistani"> Ayatollah Sistani</option>
                         <option value="khamenei"> Ayatollah Khamenei</option>
                       </select>
@@ -784,22 +935,19 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                 </>
               )}
 
-              {/* Close Button */}
-              <div className="flex gap-3">
+              {/* Modal Footer */}
+              <div className="flex pt-6 border-t" style={{ borderColor: theme.border }}>
                 <button
                   onClick={() => {
-                    // Save action - could store language/marja' preferences here
+                    // Persist settings when leaving the Settings modal
+                    if (openModal === "settings") {
+                      try { localStorage.setItem('marja', selectedMarja); } catch {}
+                    }
                     setOpenModal(null);
                   }}
-                  className="flex-1 px-4 py-2 rounded-lg font-medium transition"
-                  style={{ background: theme.accent, color: "white" }}>
-                  Save
-                </button>
-                <button
-                  onClick={() => setOpenModal(null)}
-                  className="flex-1 px-4 py-2 rounded-lg font-medium transition"
-                  style={{ background: theme.border, color: theme.text }}>
-                  Close
+                  className="w-full px-6 py-3 rounded-xl font-semibold transition hover:shadow-md active:scale-95"
+                  style={{ background: theme.accent, color: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+                  Done
                 </button>
               </div>
             </div>
