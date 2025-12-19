@@ -810,6 +810,10 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
   );
 }
 
+
+
+
+
 /* =====================
    LEVEL WIZARD
    ===================== */
@@ -1377,3 +1381,5 @@ export default function EligibilityApp() {
     />
   );
 }
+
+
