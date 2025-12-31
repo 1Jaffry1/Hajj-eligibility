@@ -25,6 +25,22 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 // import { Button } from "@/components/ui/button";
 
 /* =====================
+   UNIVERSAL CONTROLS
+   ===================== */
+// These can be adjusted to change app-wide styling
+const DEFAULT_FONT_SIZE = 16; // Base font size in pixels
+const DEFAULT_LOGO_SIZE = 48; // Logo height in pixels
+const DEFAULT_FONT_FAMILY = 'system-ui, -apple-system, sans-serif';
+
+const FONT_FAMILIES = {
+  system: 'system-ui, -apple-system, sans-serif',
+  serif: 'Georgia, Cambria, "Times New Roman", serif',
+  mono: '"Courier New", Courier, monospace',
+  arial: 'Arial, Helvetica, sans-serif',
+  verdana: 'Verdana, Geneva, sans-serif',
+};
+
+/* =====================
    THEME
    ===================== */
 const STYLES = {
@@ -146,18 +162,19 @@ function MarjaAvatar({ theme, selectedMarja }) {
 /* =====================
    UI: Logo Image (square, fallback to emoji)
    ===================== */
-function LogoImage({ theme, src, alt = "Logo" }) {
+function LogoImage({ theme, src, alt = "Logo", logoSize = DEFAULT_LOGO_SIZE }) {
   const [imgError, setImgError] = useState(false);
   // Display the logo at a consistent header height, maintain aspect ratio
   // No border or background per request
   if (imgError) {
-    return <span style={{ color: theme.text, fontSize: 16 }}>🕋</span>;
+    return <span style={{ color: theme.text, fontSize: logoSize / 3 }}>🕋</span>;
   }
   return (
     <img
       src={src}
       alt={alt}
-      className="h-12 sm:h-8 w-auto object-contain"
+      style={{ height: `${logoSize}px`, width: 'auto' }}
+      className="object-contain"
       onError={() => setImgError(true)}
     />
   );
@@ -589,6 +606,22 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
     return localStorage.getItem('marja') || 'sistani';
   });
 
+  // Font and display settings
+  const [fontSize, setFontSize] = useState(() => {
+    if (typeof window === 'undefined') return DEFAULT_FONT_SIZE;
+    const saved = localStorage.getItem('fontSize');
+    return saved ? parseInt(saved, 10) : DEFAULT_FONT_SIZE;
+  });
+  const [logoSize, setLogoSize] = useState(() => {
+    if (typeof window === 'undefined') return DEFAULT_LOGO_SIZE;
+    const saved = localStorage.getItem('logoSize');
+    return saved ? parseInt(saved, 10) : DEFAULT_LOGO_SIZE;
+  });
+  const [fontFamily, setFontFamily] = useState(() => {
+    if (typeof window === 'undefined') return 'system';
+    return localStorage.getItem('fontFamily') || 'system';
+  });
+
   // Auto-open settings on first visit
   useEffect(() => {
     const hasVisited = localStorage.getItem('hajj_app_visited');
@@ -614,122 +647,131 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
       : "");
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center" style={{ background: theme.bg }}>
+    <div className="min-h-screen w-full flex flex-col items-center" style={{ background: theme.bg, fontSize: `${fontSize}px`, fontFamily: FONT_FAMILIES[fontFamily] || FONT_FAMILIES.system }}>
       {/* Header */}
-      <div className="w-full" style={{ background: theme.surface, borderBottom: `2px solid ${theme.border}` }}>
-        {/* Main header: title + logo + buttons (responsive layout) */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Left: Logo + Title */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 flex-1">
-            <LogoImage theme={theme} src="/images/logos/tibyan.png" alt="Tibyan Academy" />
-            <div className="text-2xl sm:text-3xl font-bold tracking-wide" style={{ color: theme.title }}>
-              Hajj Eligibility
-            </div>
+      <div className="w-full relative" style={{ background: theme.surface, borderBottom: `2px solid ${theme.border}` }}>
+        {/* Main header: logo, title, marja pic, reset, hamburger (consistent order for all screens) */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-4">
+          {/* 1. Logo */}
+          <LogoImage theme={theme} src="/images/logos/tibyan.png" alt="Tibyan Academy" logoSize={logoSize} />
+          
+          {/* 2. Hajj Ability Title */}
+          <div className="text-xl sm:text-2xl md:text-3xl font-bold tracking-wide" style={{ color: theme.title }}>
+            Hajj Eligibility
           </div>
-
-          {/* Right: Action buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Marja selector */}
-            <button
-              onClick={() => setOpenModal("settings")}
-              className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg border transition hover:shadow-md focus:outline-none"
-              style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-              title="Change language or marja"
-              aria-label="Change language or marja">
-              <MarjaAvatar theme={theme} selectedMarja={selectedMarja} />
-              <div className="text-sm font-medium">
-                {selectedMarja === 'khamenei' ? 'Ayatollah Khamenei' : 'Ayatollah Sistani'}
-              </div>
-            </button>
-
-            {/* Icon buttons: Settings, Help, About, Reset (hidden on mobile) */}
-            <div className="hidden sm:flex items-center gap-2">
-              <button
-                onClick={() => setOpenModal("settings")}
-                className="px-3 py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
-                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-                title={t("Settings")} aria-label={t("Settings")}>
-                <Settings className="h-6 w-6" />
-              </button>
-              <button
-                onClick={() => setOpenModal("help")}
-                className="px-3 py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
-                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-                title={t("Help")} aria-label={t("Help")}>
-                <CircleHelp className="h-6 w-6" />
-              </button>
-              <button
-                onClick={() => setOpenModal("about")}
-                className="px-3 py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
-                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-                title={t("About")} aria-label={t("About")}>
-                <Info className="h-6 w-6" />
-              </button>
-              <button
-                onClick={onReset}
-                className="inline-flex items-center gap-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition hover:shadow-md"
-                style={{ borderColor: theme.caution, color: theme.caution, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
-                title={t("Reset")} aria-label={t("Reset")}>
-                <RotateCcw className="h-6 w-6" />
-                <span>{t("Reset")}</span>
-              </button>
-            </div>
-
-            {/* Mobile hamburger menu */}
+          
+          {/* Spacer to push remaining items to the right */}
+          <div className="flex-1"></div>
+          
+          {/* 3. Marja Pic */}
+          <button
+            onClick={() => setOpenModal("settings")}
+            className="inline-flex items-center justify-center rounded-lg border transition hover:shadow-md focus:outline-none p-1"
+            style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}
+            title="Change language or marja"
+            aria-label="Change language or marja">
+            <MarjaAvatar theme={theme} selectedMarja={selectedMarja} />
+          </button>
+          
+          {/* 4. Reset button */}
+          <button
+            onClick={onReset}
+            className="inline-flex items-center gap-1 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg border text-xs font-medium transition hover:shadow-md"
+            style={{ borderColor: theme.caution, color: theme.caution, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}
+            title={t("Reset")} aria-label={t("Reset")}>
+            <RotateCcw className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span className="hidden sm:inline">{t("Reset")}</span>
+          </button>
+          
+          {/* 5. Hamburger menu */}
+          <div className="relative">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="sm:hidden px-3 py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
-              style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}
+              className="px-2 sm:px-3 py-2 sm:py-2.5 inline-flex items-center justify-center rounded-lg border transition hover:shadow-md"
+              style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}
               title="Menu" aria-label="Menu">
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {mobileMenuOpen ? <X className="h-5 w-5 sm:h-6 sm:w-6" /> : <Menu className="h-5 w-5 sm:h-6 sm:w-6" />}
             </button>
+            
+            {/* Desktop: Compact dropdown positioned under menu button */}
+            {mobileMenuOpen && (
+              <div className="hidden sm:block absolute right-0 top-full mt-2 z-50">
+                <div className="rounded-lg border shadow-lg" style={{ borderColor: theme.border, background: theme.surface, minWidth: '180px' }}>
+                  <div className="flex flex-col py-2">
+                    <button
+                      onClick={() => {
+                        setOpenModal("settings");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-2 transition hover:opacity-80 text-left"
+                      style={{ color: theme.text, background: "transparent", cursor: 'pointer' }}>
+                      <Settings className="h-5 w-5" />
+                      <span className="text-sm font-medium">{t("Settings")}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setOpenModal("help");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-2 transition hover:opacity-80 text-left"
+                      style={{ color: theme.text, background: "transparent", cursor: 'pointer' }}>
+                      <CircleHelp className="h-5 w-5" />
+                      <span className="text-sm font-medium">{t("Help")}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setOpenModal("about");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-2 transition hover:opacity-80 text-left"
+                      style={{ color: theme.text, background: "transparent", cursor: 'pointer' }}>
+                      <Info className="h-5 w-5" />
+                      <span className="text-sm font-medium">{t("About")}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Mobile menu (visible only on small screens when open) */}
+        {/* Menu dropdown */}
         {mobileMenuOpen && (
-          <div className="sm:hidden max-w-5xl mx-auto px-4 pb-3 border-t" style={{ borderColor: theme.border }}>
-            <div className="flex flex-col gap-2 pt-3">
-              <button
-                onClick={() => {
-                  setOpenModal("settings");
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
-                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-                <Settings className="h-5 w-5" />
-                <span className="text-sm font-medium">{t("Settings")}</span>
-              </button>
-              <button
-                onClick={() => {
-                  setOpenModal("help");
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
-                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-                <CircleHelp className="h-5 w-5" />
-                <span className="text-sm font-medium">{t("Help")}</span>
-              </button>
-              <button
-                onClick={() => {
-                  setOpenModal("about");
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
-                style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-                <Info className="h-5 w-5" />
-                <span className="text-sm font-medium">{t("About")}</span>
-              </button>
-              <button
-                onClick={() => {
-                  onReset();
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full px-3 py-2.5 flex items-center gap-1 rounded-lg border transition hover:shadow-md text-left text-xs font-medium"
-                style={{ borderColor: theme.caution, color: theme.caution, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-                <RotateCcw className="h-5 w-5" />
-                <span>{t("Reset")}</span>
-              </button>
+          <div>
+            {/* Mobile: Full width dropdown */}
+            <div className="sm:hidden w-full px-4 pb-3 border-t" style={{ borderColor: theme.border }}>
+              <div className="flex flex-col gap-2 pt-3">
+                <button
+                  onClick={() => {
+                    setOpenModal("settings");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
+                  style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}>
+                  <Settings className="h-5 w-5" />
+                  <span className="text-sm font-medium">{t("Settings")}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setOpenModal("help");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
+                  style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}>
+                  <CircleHelp className="h-5 w-5" />
+                  <span className="text-sm font-medium">{t("Help")}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setOpenModal("about");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full px-3 py-2.5 flex items-center gap-2 rounded-lg border transition hover:shadow-md text-left"
+                  style={{ borderColor: theme.border, color: theme.text, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}>
+                  <Info className="h-5 w-5" />
+                  <span className="text-sm font-medium">{t("About")}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -871,6 +913,78 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                         <option value="khamenei"> Ayatollah Khamenei</option>
                       </select>
                     </div>
+                    
+                    {/* Font Settings */}
+                    <div className="pt-4 border-t" style={{ borderColor: theme.border }}>
+                      <h4 className="text-lg font-semibold mb-3" style={{ color: theme.title }}>Display</h4>
+                      
+                      <div className="space-y-4">
+                        {/* Font Size */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-2">Font Size</label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="range"
+                              min="12"
+                              max="24"
+                              step="1"
+                              value={fontSize}
+                              onChange={(e) => {
+                                const newSize = parseInt(e.target.value, 10);
+                                setFontSize(newSize);
+                                try { localStorage.setItem('fontSize', newSize.toString()); } catch {}
+                              }}
+                              className="flex-1"
+                              style={{ accentColor: theme.accent }}
+                            />
+                            <span className="text-sm font-medium w-12 text-center" style={{ color: theme.text }}>{fontSize}px</span>
+                          </div>
+                        </div>
+
+                        {/* Font Family */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-2">Font Style</label>
+                          <select
+                            className="w-full px-3 py-2 rounded-lg border focus:outline-none"
+                            style={{ borderColor: theme.border, background: theme.surfaceSoft, color: theme.text }}
+                            value={fontFamily}
+                            onChange={(e) => {
+                              const newFamily = e.target.value;
+                              setFontFamily(newFamily);
+                              try { localStorage.setItem('fontFamily', newFamily); } catch {}
+                            }}
+                          >
+                            <option value="system">System Default</option>
+                            <option value="serif">Serif</option>
+                            <option value="mono">Monospace</option>
+                            <option value="arial">Arial</option>
+                            <option value="verdana">Verdana</option>
+                          </select>
+                        </div>
+
+                        {/* Logo Size */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-2">Logo Size</label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="range"
+                              min="32"
+                              max="80"
+                              step="4"
+                              value={logoSize}
+                              onChange={(e) => {
+                                const newSize = parseInt(e.target.value, 10);
+                                setLogoSize(newSize);
+                                try { localStorage.setItem('logoSize', newSize.toString()); } catch {}
+                              }}
+                              className="flex-1"
+                              style={{ accentColor: theme.accent }}
+                            />
+                            <span className="text-sm font-medium w-12 text-center" style={{ color: theme.text }}>{logoSize}px</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </>
               )}
@@ -954,7 +1068,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                     setOpenModal(null);
                   }}
                   className="w-full px-6 py-3 rounded-xl font-semibold transition hover:shadow-md active:scale-95"
-                  style={{ background: theme.accent, color: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+                  style={{ background: theme.accent, color: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}>
                   Done
                 </button>
               </div>
@@ -1224,7 +1338,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                       <div className="flex items-center justify-center gap-2">
                         <p className="text-[15px] font-medium text-center" style={{ color: theme.text }}>{q}</p>
                         {help && (
-                          <button onClick={() => setOpenHelpFor(openHelpFor === qIdx ? null : qIdx)} className="inline-flex items-center gap-2 px-2 py-1 rounded-lg border text-sm flex-shrink-0" style={{ borderColor: theme.border, color: theme.text, background: theme.surface }} aria-expanded={openHelpFor === qIdx}>
+                          <button onClick={() => setOpenHelpFor(openHelpFor === qIdx ? null : qIdx)} className="inline-flex items-center gap-2 px-2 py-1 rounded-lg border text-sm flex-shrink-0" style={{ borderColor: theme.border, color: theme.text, background: theme.surface, cursor: 'pointer' }} aria-expanded={openHelpFor === qIdx}>
                             <CircleHelp className="h-4 w-4" />
                           </button>
                         )}
@@ -1259,6 +1373,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                                     color: theme.text,
                                     border: selected ? "2px solid " + theme.accent : "1px solid " + theme.border,
                                     boxShadow: selected ? "0 1px 0 rgba(0,0,0,0.06)" : undefined,
+                                    cursor: 'pointer',
                                     // give each button a flexible width but ensure a reasonable minimum so very short labels don't collapse
                                     minWidth: 120,
                                     maxWidth: 320,
@@ -1298,6 +1413,7 @@ function LevelWizard({ theme, levelId, onSave, levelRules, texts, phrases, healt
                                   // don't force fixed height — allow multi-line labels to increase height
                                   lineHeight: 1.25,
                                   textAlign: "center",
+                                  cursor: 'pointer',
                                 }}
                               >
                                 <span style={{ display: "block" }}>{label}</span>
