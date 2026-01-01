@@ -600,6 +600,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
 
   const [openModal, setOpenModal] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   // Persist selected Marja in localStorage so the avatar can reflect it
   const [selectedMarja, setSelectedMarja] = useState(() => {
     if (typeof window === 'undefined') return 'sistani';
@@ -612,6 +613,11 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
     const saved = localStorage.getItem('fontSize');
     return saved ? parseInt(saved, 10) : DEFAULT_FONT_SIZE;
   });
+  
+  // Apply fontSize changes to document
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${fontSize}px`;
+  }, [fontSize]);
   const [logoSize, setLogoSize] = useState(() => {
     if (typeof window === 'undefined') return DEFAULT_LOGO_SIZE;
     const saved = localStorage.getItem('logoSize');
@@ -647,7 +653,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
       : "");
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center" style={{ background: theme.bg, fontSize: `${fontSize}px`, fontFamily: FONT_FAMILIES[fontFamily] || FONT_FAMILIES.system }}>
+    <div className="min-h-screen w-full flex flex-col items-center" style={{ background: theme.bg, fontSize: `${fontSize}px !important`, fontFamily: FONT_FAMILIES[fontFamily] || FONT_FAMILIES.system }}>
       {/* Header */}
       <div className="w-full relative" style={{ background: theme.surface, borderBottom: `2px solid ${theme.border}` }}>
         {/* Main header: logo, title, marja pic, reset, hamburger (consistent order for all screens) */}
@@ -675,7 +681,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
           
           {/* 4. Reset button */}
           <button
-            onClick={onReset}
+            onClick={() => setShowResetConfirm(true)}
             className="inline-flex items-center gap-1 px-2 sm:px-3 py-2 sm:py-2.5 rounded-lg border text-xs font-medium transition hover:shadow-md"
             style={{ borderColor: theme.caution, color: theme.caution, background: "transparent", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}
             title={t("Reset")} aria-label={t("Reset")}>
@@ -845,15 +851,9 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
             return (
               <Card className="rounded-3xl shadow-lg border-2 flex items-center justify-center gap-3 py-6" style={{ background: overallResult === "failed" ? theme.surfaceSoft : theme.surface, borderColor: bannerBorder }}>
                 {overallResult === "failed" ? (
-                  <>
-                    <XCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: theme.danger }} />
-                    <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
-                  </>
+                  <span className="text-lg text-center" style={{ color: theme.text }}>{overallText}</span>
                 ) : (
-                  <>
-                    <CheckCircle className="h-6 w-6 flex-shrink-0 ml-2" style={{ color: hs ? healthColor : theme.success }} />
-                    <span className="text-lg font-semibold" style={{ color: theme.text }}>{overallText}</span>
-                  </>
+                  <span className="text-lg text-center" style={{ color: theme.text }}>{overallText}</span>
                 )}
               </Card>
             );
@@ -920,7 +920,7 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                       
                       <div className="space-y-4">
                         {/* Font Size */}
-                        <div>
+                      <div>
                           <label className="block text-sm font-semibold mb-2">Font Size</label>
                           <div className="flex items-center gap-3">
                             <input
@@ -928,11 +928,11 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                               min="12"
                               max="24"
                               step="1"
-                              value={fontSize}
+                              value={fontSize.toString()}
                               onChange={(e) => {
                                 const newSize = parseInt(e.target.value, 10);
                                 setFontSize(newSize);
-                                try { localStorage.setItem('fontSize', newSize.toString()); } catch {}
+                                localStorage.setItem('fontSize', newSize.toString());
                               }}
                               className="flex-1"
                               style={{ accentColor: theme.accent }}
@@ -960,28 +960,6 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                             <option value="arial">Arial</option>
                             <option value="verdana">Verdana</option>
                           </select>
-                        </div>
-
-                        {/* Logo Size */}
-                        <div>
-                          <label className="block text-sm font-semibold mb-2">Logo Size</label>
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="range"
-                              min="32"
-                              max="80"
-                              step="4"
-                              value={logoSize}
-                              onChange={(e) => {
-                                const newSize = parseInt(e.target.value, 10);
-                                setLogoSize(newSize);
-                                try { localStorage.setItem('logoSize', newSize.toString()); } catch {}
-                              }}
-                              className="flex-1"
-                              style={{ accentColor: theme.accent }}
-                            />
-                            <span className="text-sm font-medium w-12 text-center" style={{ color: theme.text }}>{logoSize}px</span>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -1054,8 +1032,8 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                       </p>
                     </div>
                   </div>
-                </>
-              )}
+                </>)}
+              
 
               {/* Modal Footer */}
               <div className="flex pt-6 border-t" style={{ borderColor: theme.border }}>
@@ -1075,6 +1053,59 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
             </div>
           </motion.div>
         </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reset Confirmation Modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            key="reset-modal-overlay"
+            className="fixed inset-0 flex items-center justify-center p-4 z-50"
+            style={{ background: "rgba(0, 0, 0, 0.5)", backdropFilter: "blur(2px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            onClick={() => setShowResetConfirm(false)}
+          >
+            <motion.div
+              key="reset-modal-content"
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="rounded-2xl shadow-2xl border-2 max-w-sm w-full p-6"
+              style={{ background: theme.surface, borderColor: theme.border }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-2xl font-bold mb-4" style={{ color: theme.title }}>Confirm Reset</h3>
+              <div className="space-y-4 mb-6" style={{ color: theme.text }}>
+                <div className="p-3 rounded-lg" style={{ background: theme.surfaceSoft }}>
+                  <p className="text-sm leading-relaxed" style={{ color: "black" }}>
+                    Are you sure you want to reset all your answers? This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 px-6 py-3 rounded-xl font-semibold transition hover:shadow-md active:scale-95"
+                  style={{ background: theme.border, color: theme.text, boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}>
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    onReset();
+                    setShowResetConfirm(false);
+                  }}
+                  className="flex-1 px-6 py-3 rounded-xl font-semibold transition hover:shadow-md active:scale-95"
+                  style={{ background: theme.caution, color: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", cursor: 'pointer' }}>
+                  Reset All
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
