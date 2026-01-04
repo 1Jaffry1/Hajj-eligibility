@@ -1,6 +1,9 @@
 level,qId,order,question_text,help_text,label1,label2,label3,label4,label5
-1,L1Q1,1,Are you baligh?,Age of maturity in fiqh 15 years for boys and 9 years for women,Yes,No,,,
-1,L1Q2,2,Are you sane?,,Yes,No,,,
+1,L1Q1,1,Are you baligh?,"Age of maturity:
+For males: is completion of 15 lunar years or growth of pubic hair or growth of underarm hair or ejaculation whichever occurs sooner. 
+
+For females: is 9 lunar years.",Yes,No,,,
+1,L1Q2,2,Are you sane all year round?,,Yes,No,,,
 1,L1Q3,3,Is your insanity permanent?,,Yes,No,,,
 1,L1Q4,4,Is your insanity only during Hajj season?,,Yes,No,,,
 1,L1Q5,5,Is your sanity period enough to allow you to perform Hajj and its prerequisites?,,Yes,No,,,
@@ -12,7 +15,6 @@ level,qId,order,question_text,help_text,label1,label2,label3,label4,label5
 2) Travel expenses for Hajj.
 
 3) Living expenses of dependents (and others) while you are away for Hajj.
-
 
 Does your Hajj gift package fully cover the above mentioned costs based on your status?",,Yes,No,,,
 3,L3Q3,3,Do you only earn during the Hajj season and use those earnings to survive the rest of the year such that if you go to Hajj you won’t be able to survive the rest of the year?,,Yes,No,,,

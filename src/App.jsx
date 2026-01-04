@@ -786,14 +786,55 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
         {levels.map((lvl, idx) => {
           const Icon = lvl.icon || MoreHorizontal;
           const status = statuses[lvl.id] || "idle";
-          const isLocked = lvl.id === 3 && !(statuses[2] === "completed");
+          
+          // Determine lock status based on requirements:
+          // - Health (level 2) starts disabled, enabled only if Personal (level 1) passes
+          // - If Personal has NIYABAT (ORANGE/BLUE health state), Health is locked and auto-completed
+          // - Financial (level 3) needs both Personal and Health completed
+          
+          const isPersonal = lvl.id === 1;
+          const isHealth = lvl.id === 2;
+          const isFinancial = lvl.id === 3;
+          const isTravel = lvl.id === 4;
+          const isTime = lvl.id === 5;
+          const isMiscellaneous = lvl.id === 6;
+          
+          const personalStatus = statuses[1] || "idle";
+          const healthStatus = statuses[2] || "idle";
+          const financialStatus = statuses[3] || "idle";
+          const travelStatus = statuses[4] || "idle";
+          const timeStatus = statuses[5] || "idle";
+          const personalHealthState = healthByLevel[1];
+          
+          // Determine if Health is auto-completed (when Personal has NIYABAT)
+          const personalPassed = personalStatus === "completed";
+          const hasNiyabat = personalPassed && (personalHealthState === "ORANGE" || personalHealthState === "BLUE");
+          const healthAutoCompleted = hasNiyabat;
+          
+          // Health lock logic
+          let isLocked = false;
+          if (isHealth) {
+            // Health disabled if Personal hasn't passed, or if it's auto-completed (NIYABAT)
+            isLocked = !personalPassed || healthAutoCompleted;
+          } else if (isFinancial) {
+            // Financial disabled unless both Personal and Health are completed
+            const bothCompleted = personalStatus === "completed" && (healthStatus === "completed" || healthAutoCompleted);
+            isLocked = !bothCompleted;
+          } else if (isMiscellaneous) {
+            // Miscellaneous disabled unless all five tests are completed
+            const allFiveCompleted = personalStatus === "completed" && (healthStatus === "completed" || healthAutoCompleted) && financialStatus === "completed" && travelStatus === "completed" && timeStatus === "completed";
+            isLocked = !allFiveCompleted;
+          }
           
           // For level 1 and 2, use health state color when completed
           let bcolor;
           if (status === "failed") {
             bcolor = theme.danger;
-          } else if (status === "completed") {
-            if (lvl.id === 1 || lvl.id === 2) {
+          } else if (status === "completed" || (isHealth && healthAutoCompleted)) {
+            if (isHealth && healthAutoCompleted) {
+              // Health auto-completed due to NIYABAT: always show green
+              bcolor = theme.success;
+            } else if (lvl.id === 1 || lvl.id === 2) {
               const hs = healthByLevel[lvl.id];
               bcolor = hs === "ORANGE" ? theme.warn : hs === "BLUE" ? theme.caution : theme.success;
             } else {
@@ -816,8 +857,8 @@ function Home({ theme, onPick, statuses, overallResult, levels, onReset, phrases
                   border: "3px solid " + bcolor,
 
                   boxSizing: "border-box",
-                  opacity: isLocked ? 0.4 : 1,
-                  filter: isLocked ? "grayscale(0.35) brightness(0.9)" : "none",
+                  opacity: isLocked && !(isHealth && healthAutoCompleted) ? 0.4 : isHealth && healthAutoCompleted ? 0.7 : 1,
+                  filter: isLocked && !(isHealth && healthAutoCompleted) ? "grayscale(0.35) brightness(0.9)" : "none",
                 }}
               >
 
@@ -1679,6 +1720,12 @@ export default function EligibilityApp() {
         // track per-level HEALTH_STATE for banner coloring (level 2)
         if (typeof healthState === 'string') {
           setHealthByLevel((prev) => ({ ...prev, [lid]: healthState }));
+          
+          // Auto-complete Health if Personal has NIYABAT (ORANGE or BLUE)
+          if (lid === 1 && status === "completed" && (healthState === "ORANGE" || healthState === "BLUE")) {
+            setStatuses((prev) => ({ ...prev, 2: "completed" }));
+            setHealthByLevel((prev) => ({ ...prev, 2: healthState }));
+          }
         }
         setScreen("home");
       }}
